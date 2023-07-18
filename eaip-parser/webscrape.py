@@ -19,6 +19,7 @@ from loguru import logger
 # Local Libraries
 from . import airac, functions
 
+# This is needed to supress 'xml as html' warnings with bs4
 warnings.filterwarnings("ignore", category=UserWarning)
 
 class Webscrape:
