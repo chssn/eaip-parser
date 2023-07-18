@@ -275,6 +275,8 @@ class Webscrape:
         search_data = get_data.find_all("span")
         bar_length = len(search_data)
         airspace = False
+        last_df_in_title = False
+        last_airspace = False
         row = 0
         last_arc_title = False
         arc_counter = 0
@@ -397,21 +399,22 @@ class Webscrape:
                 
                 output = self.get_boundary(space)
                 if airspace:
-                    # for FIRs do this
-                    if last_airspace.group(1) == "FIR":
-                        df_fir_out = coord_to_table(last_df_in_title, callsign_out, frequency, output)
-                        df_fir = pd.concat([df_fir, df_fir_out], ignore_index=True)
-                    # for UIRs do this - same extent as FIR
-                    #if last_airspace.group(1) == "UIR":
-                    #    df_uir_out = {'name': last_df_in_title,'callsign': callsign_out,'frequency': str(frequency), 'boundary': str(output), 'upper_fl': '000', 'lower_fl': '000'}
-                    #    df_uir = pd.concat([df_uir, df_uir_out], ignore_index=True)
-                    # for CTAs do this
-                    if last_airspace.group(1) == "CTA":
-                        df_cta_out = coord_to_table(last_df_in_title, callsign_out, frequency, output)
-                        df_cta = pd.concat([df_cta, df_cta_out], ignore_index=True)
-                    if last_airspace.group(1) == "TMA":
-                        df_tma_out = coord_to_table(last_df_in_title, callsign_out, frequency, output)
-                        df_tma = pd.concat([df_tma, df_tma_out], ignore_index=True)
+                    if last_airspace:
+                        # for FIRs do this
+                        if last_airspace.group(1) == "FIR":
+                            df_fir_out = coord_to_table(last_df_in_title, callsign_out, frequency, output)
+                            df_fir = pd.concat([df_fir, df_fir_out], ignore_index=True)
+                        # for UIRs do this - same extent as FIR
+                        #if last_airspace.group(1) == "UIR":
+                        #    df_uir_out = {'name': last_df_in_title,'callsign': callsign_out,'frequency': str(frequency), 'boundary': str(output), 'upper_fl': '000', 'lower_fl': '000'}
+                        #    df_uir = pd.concat([df_uir, df_uir_out], ignore_index=True)
+                        # for CTAs do this
+                        if last_airspace.group(1) == "CTA":
+                            df_cta_out = coord_to_table(last_df_in_title, callsign_out, frequency, output)
+                            df_cta = pd.concat([df_cta, df_cta_out], ignore_index=True)
+                        if last_airspace.group(1) == "TMA":
+                            df_tma_out = coord_to_table(last_df_in_title, callsign_out, frequency, output)
+                            df_tma = pd.concat([df_tma, df_tma_out], ignore_index=True)
                     space = []
                     loop_coord = True
                     first_callsign = False
