@@ -1,0 +1,5 @@
+beautifulsoup4==4.12.2
+geographiclib==2.0
+loguru==0.7.0
+pandas==2.0.3
+Requests==2.31.0
