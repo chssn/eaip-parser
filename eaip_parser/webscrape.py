@@ -308,7 +308,7 @@ class Webscrape:
                 if print_callsign:
                     callsign_out = print_callsign.group(1)
                     first_callsign = True
-            
+
             if (freq) and (first_freq is False):
                 # get the first (and only the first) printed callsign
                 print_frequency = re.search(r"\>(1[1-3]{1}[\d]{1}\.[\d]{3})\<", str(search_data[row-1]))
@@ -318,7 +318,7 @@ class Webscrape:
 
             if arc:
                 # what to do with "thence clockwise by the arc of a circle"
-                radius = re.search(r"\>([\d]{1,2})\<", str(search_data[row-1]))
+                # radius = re.search(r"\>([\d]{1,2})\<", str(search_data[row-1]))
 
                 # check to see if this a series, if so then increment the counter
                 if df_in_title == str(last_arc_title):
@@ -382,7 +382,7 @@ class Webscrape:
                 loop_coord = False
                 # get the coordinate
                 print_coord = re.findall(r"\>([\d]{6,7})(N|S|E|W)\<", str(search_data[row-1]))
-                if print_coord: 
+                if print_coord:
                     space.append(print_coord[0])
 
             if loop_coord and space:
@@ -396,7 +396,7 @@ class Webscrape:
                         'lower_fl': '000'
                         }, index=[0])
                     return df_out
-                
+
                 output = self.get_boundary(space)
                 if airspace:
                     if last_airspace:
@@ -576,8 +576,8 @@ class Webscrape:
     @staticmethod
     def search(find, name:str, string:str):
         """Searches for all instances of a string"""
-        searchString = find + "(?=<\/span>.*>" + name + ")"
-        return re.findall(f"{searchString}", string)
+        search_string = find + "(?=<\/span>.*>" + name + ")"
+        return re.findall(f"{search_string}", string)
 
     @staticmethod
     def split(word:str) -> list:
@@ -612,7 +612,7 @@ class Webscrape:
         full_boundary = ''
         for coord in space:
             coord_format = re.search(r"[N|S][\d]{2,3}\.[\d]{1,2}\.[\d]{1,2}\.[\d]{1,2}\s[E|W][\d]{2,3}\.[\d]{1,2}\.[\d]{1,2}\.[\d]{1,2}", str(coord))
-            if coord_format != None:
+            if coord_format is not None:
                 full_boundary += f"{coord}/"
             else:
                 if lat:
@@ -623,7 +623,7 @@ class Webscrape:
                     lat_lon_obj.append(coord[0])
                     lat_lon_obj.append(coord[1])
                     lat = True
-                
+
                 # if lat_lon_obj has 4 items
                 if len(lat_lon_obj) == 4:
                     lat_lon = self.sct_location_builder(lat_lon_obj[0], lat_lon_obj[2], lat_lon_obj[1], lat_lon_obj[3])
@@ -632,7 +632,7 @@ class Webscrape:
                     lat_lon_obj = []
 
         return full_boundary.rstrip('/')
-    
+
     def dms2dd(self, lat:str, lon:str, ns:str, ew:str) -> list:
         """Converts Degress, Minutes and Seconds to Decimal Degrees"""
 
@@ -668,7 +668,7 @@ class Webscrape:
         geolib_start = Geodesic.WGS84.Inverse(center_x, center_y, start_x, start_y)
         start_brg = geolib_start['azi1']
         start_dst = geolib_start['s12']
-        start_brg_compass = ((360 + start_brg) % 360)
+        # start_brg_compass = ((360 + start_brg) % 360)
 
         # centre point to end
         geolib_end = Geodesic.WGS84.Inverse(center_x, center_y, end_x, end_y)
@@ -698,7 +698,7 @@ class Webscrape:
         # math.modf() splits whole number and decimal into tuple
         # eg 53.3478 becomes (0.3478, 53)
         split_degx = math.modf(longitude)
-        
+
         # the whole number [index 1] is the degrees
         degrees_x = int(split_degx[1])
 
