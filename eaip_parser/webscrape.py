@@ -25,7 +25,7 @@ warnings.filterwarnings("ignore", category=UserWarning)
 class Webscrape:
     """Class to scrape data from the given AIRAC eAIP URL"""
 
-    def __init__(self, next_cycle:bool=False, country_code:str="EG"):
+    def __init__(self, next_cycle:bool=True, country_code:str="EG"):
         airac_cycle = airac.Airac()
         self.cycle = airac_cycle.cycle(next_cycle=next_cycle)
         self.cycle_url = airac_cycle.url(next_cycle=next_cycle)
