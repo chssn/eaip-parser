@@ -39,10 +39,10 @@ class Airac:
 
         return number_of_cycles
 
-    def cycle(self, next_cycle:bool=False) -> str:
+    def cycle(self, next_cycle:bool=False, date_in=0) -> str:
         """Return the date of the current AIRAC cycle"""
 
-        number_of_cycles = self.initialise()
+        number_of_cycles = self.initialise(date_in)
         if next_cycle:
             number_of_days = (number_of_cycles + 1) * self.cycle_days + 1
         else:
@@ -52,15 +52,15 @@ class Airac:
 
         return current_cycle
 
-    def url(self, next_cycle:bool=False) -> str:
+    def url(self, next_cycle:bool=False, date_in=0) -> str:
         """Return a generated URL based on the AIRAC cycle start date"""
 
         base_url = "https://www.aurora.nats.co.uk/htmlAIP/Publications/"
         if next_cycle:
             # if the 'next_cycle' variable is passed, generate a URL for the next AIRAC cycle
-            base_date = self.cycle(next_cycle=True)
+            base_date = self.cycle(next_cycle=True, date_in=date_in)
         else:
-            base_date = self.cycle()
+            base_date = self.cycle(date_in=date_in)
 
         base_post_string = "-AIRAC/html/eAIP/"
 
