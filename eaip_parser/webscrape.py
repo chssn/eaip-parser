@@ -6,7 +6,6 @@ Chris Parkinson (@chssn)
 #!/usr/bin/env python3.8
 
 # Standard Libraries
-import math
 import re
 import warnings
 
