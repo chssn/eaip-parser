@@ -105,7 +105,7 @@ class Webscrape:
                 aerodrome_ad_02_18 = get_runways.find(id=aero_icao + "-AD-2.18")
 
                 # Find current magnetic variation for this aerodrome
-                aerodrome_mag_var = self.search("([\d]{1}\.[\d]{2}).([W|E]{1})", "TAD_HP;VAL_MAG_VAR", str(aerodrome_ad_02_02))
+                aerodrome_mag_var = self.search(r"([\d]{1}\.[\d]{2}).([W|E]{1})", "TAD_HP;VAL_MAG_VAR", str(aerodrome_ad_02_02))
                 plus_minus = functions.Geo.plus_minus(aerodrome_mag_var[0][1])
                 float_mag_var = plus_minus + aerodrome_mag_var[0][0]
 
@@ -134,12 +134,12 @@ class Webscrape:
                 df_ad_01.at[index, 'elevation'] = int(aerodrome_elev[2])
 
                 # Find runway locations
-                aerodrome_runways = self.search("([\d]{2}[L|C|R]?)", "TRWY_DIRECTION;TXT_DESIG", str(aerodrome_ad_02_12))
-                aerodrome_runways_lat = self.search("([\d]{6}\.[\d]{2}[N|S]{1})", "TRWY_CLINE_POINT;GEO_LAT", str(aerodrome_ad_02_12))
-                aerodrome_runways_long = self.search("([\d]{7}\.[\d]{2}[E|W]{1})", "TRWY_CLINE_POINT;GEO_LONG", str(aerodrome_ad_02_12))
-                aerodrome_runways_elev = self.search("([\d]{1,3})", "TRWY_CLINE_POINT;VAL_ELEV", str(aerodrome_ad_02_12))
-                aerodrome_runways_bearing = self.search("([\d]{3}\.[\d]{2}.)", "TRWY_DIRECTION;VAL_TRUE_BRG", str(aerodrome_ad_02_12))
-                aerodrome_runways_len = self.search("([\d]{3,4})", "TRWY;VAL_LEN;", str(aerodrome_ad_02_12))
+                aerodrome_runways = self.search(r"([\d]{2}[L|C|R]?)", "TRWY_DIRECTION;TXT_DESIG", str(aerodrome_ad_02_12))
+                aerodrome_runways_lat = self.search(r"([\d]{6}\.[\d]{2}[N|S]{1})", "TRWY_CLINE_POINT;GEO_LAT", str(aerodrome_ad_02_12))
+                aerodrome_runways_long = self.search(r"([\d]{7}\.[\d]{2}[E|W]{1})", "TRWY_CLINE_POINT;GEO_LONG", str(aerodrome_ad_02_12))
+                aerodrome_runways_elev = self.search(r"([\d]{1,3})", "TRWY_CLINE_POINT;VAL_ELEV", str(aerodrome_ad_02_12))
+                aerodrome_runways_bearing = self.search(r"([\d]{3}\.[\d]{2}.)", "TRWY_DIRECTION;VAL_TRUE_BRG", str(aerodrome_ad_02_12))
+                aerodrome_runways_len = self.search(r"([\d]{3,4})", "TRWY;VAL_LEN;", str(aerodrome_ad_02_12))
 
                 if len(aerodrome_runways) == len(aerodrome_runways_lat) and len(aerodrome_runways) == len(aerodrome_runways_long) and len(aerodrome_runways) == len(aerodrome_runways_elev) and len(aerodrome_runways) == len(aerodrome_runways_bearing) and len(aerodrome_runways) == len(aerodrome_runways_len):
                     for rwy, lat, lon, elev, brg, rwy_len in zip(aerodrome_runways, aerodrome_runways_lat, aerodrome_runways_long, aerodrome_runways_elev, aerodrome_runways_bearing, aerodrome_runways_len):
@@ -174,7 +174,7 @@ class Webscrape:
 
                 # Find air traffic services
                 aerodrome_services = self.search("(APPROACH|GROUND|DELIVERY|TOWER|DIRECTOR|INFORMATION|RADAR|RADIO|FIRE|EMERGENCY)", "TCALLSIGN_DETAIL", str(aerodrome_ad_02_18))
-                service_frequency = self.search("([\d]{3}\.[\d]{3})", "TFREQUENCY", str(aerodrome_ad_02_18))
+                service_frequency = self.search(r"([\d]{3}\.[\d]{3})", "TFREQUENCY", str(aerodrome_ad_02_18))
 
                 last_srv = ''
                 if len(aerodrome_services) == len(service_frequency):
@@ -277,7 +277,7 @@ class Webscrape:
                         area_number += 1
                     row += 1
             row += 1
-        complex_areas.to_csv(f'{functions.work_dir}\\DataFrames\enr_02-CW-ACW-Helper.csv')
+        complex_areas.to_csv(f'{functions.work_dir}\\DataFrames\\enr_02-CW-ACW-Helper.csv')
 
         search_data = get_data.find_all("span")
         bar_length = len(search_data)
@@ -448,10 +448,10 @@ class Webscrape:
             get_enr_03 = self.get_table_soup(self.country + "-ENR-3."+ section +"-en-GB.html")
             list_tables = get_enr_03.find_all("tbody")
             for row in list_tables:
-                get_airway_name = self.search("([A-Z]{1,2}[\d]{1,4})", "TEN_ROUTE_RTE;TXT_DESIG", str(row))
-                get_airway_route = self.search("([A-Z]{3,5})", "T(DESIGNATED_POINT|DME|VOR|NDB);CODE_ID", str(row))
-                get_point_lat = self.search("(\d{6}\.\d{2}[NS]|(?<!\d\.)\d{6}[NS])", "T(DESIGNATED_POINT|DME|VOR|NDB);GEO_LAT", str(row))
-                get_point_lon = self.search("(\d{7}\.\d{2}[EW]|(?<!\d\.)\d{7}[EW])", "T(DESIGNATED_POINT|DME|VOR|NDB);GEO_LONG", str(row))
+                get_airway_name = self.search(r"([A-Z]{1,2}[\d]{1,4})", "TEN_ROUTE_RTE;TXT_DESIG", str(row))
+                get_airway_route = self.search(r"([A-Z]{3,5})", "T(DESIGNATED_POINT|DME|VOR|NDB);CODE_ID", str(row))
+                get_point_lat = self.search(r"(\d{6}\.\d{2}[NS]|(?<!\d\.)\d{6}[NS])", "T(DESIGNATED_POINT|DME|VOR|NDB);GEO_LAT", str(row))
+                get_point_lon = self.search(r"(\d{7}\.\d{2}[EW]|(?<!\d\.)\d{7}[EW])", "T(DESIGNATED_POINT|DME|VOR|NDB);GEO_LONG", str(row))
                 print_route = ''
                 if get_airway_name:
                     for point, point_lat, point_lon in zip(get_airway_route, get_point_lat, get_point_lon):
@@ -478,8 +478,8 @@ class Webscrape:
             name = id_name.split('-')
 
             # Find the point location
-            lat = self.search("([\d]{6}[\.]{0,1}[\d]{0,2}[N|S]{1})", "T", str(row))
-            lon = self.search("([\d]{7}[\.]{0,1}[\d]{0,2}[E|W]{1})", "T", str(row))
+            lat = self.search(r"([\d]{6}[\.]{0,1}[\d]{0,2}[N|S]{1})", "T", str(row))
+            lon = self.search(r"([\d]{7}[\.]{0,1}[\d]{0,2}[E|W]{1})", "T", str(row))
             point_lat = re.search(r"([\d]{6}(\.[\d]{2}|))([N|S]{1})", str(lat))
             point_lon = re.search(r"([\d]{7}(\.[\d]{2}|))([W|E]{1})", str(lon))
 
@@ -500,7 +500,7 @@ class Webscrape:
                     #    name[1] = "VOR"
 
                     # find the frequency
-                    freq_search = self.search("([\d]{3}\.[\d]{3})", "T", str(row))
+                    freq_search = self.search(r"([\d]{3}\.[\d]{3})", "T", str(row))
                     freq = re.search(r"([\d]{3}\.[\d]{3})", str(freq_search))
 
                     # Add navaid to the aerodromeDB
@@ -536,10 +536,10 @@ class Webscrape:
         get_enr_05 = self.get_table_soup(self.country + "-ENR-5.1-en-GB.html")
         list_tables = get_enr_05.find_all("tr")
         for row in list_tables:
-            get_id = self.search("((EG)\s(D|P|R)[\d]{3}[A-Z]*)", "TAIRSPACE;CODE_ID", str(row))
-            get_name = self.search("([A-Z\s]*)", "TAIRSPACE;TXT_NAME", str(row))
-            get_loc = self.search("([\d]{6,7})([N|E|S|W]{1})", "TAIRSPACE_VERTEX;GEO_L", str(row))
-            get_upper = self.search("([\d]{3,5})", "TAIRSPACE_VOLUME;VAL_DIST_VER_UPPER", str(row))
+            get_id = self.search(r"((EG)\s(D|P|R)[\d]{3}[A-Z]*)", "TAIRSPACE;CODE_ID", str(row))
+            get_name = self.search(r"([A-Z\s]*)", "TAIRSPACE;TXT_NAME", str(row))
+            get_loc = self.search(r"([\d]{6,7})([N|E|S|W]{1})", "TAIRSPACE_VERTEX;GEO_L", str(row))
+            get_upper = self.search(r"([\d]{3,5})", "TAIRSPACE_VOLUME;VAL_DIST_VER_UPPER", str(row))
             #get_lower = self.search("([\d]{3,5})|(SFC)", "TAIRSPACE_VOLUME;VAL_DIST_VER_LOWER", str(row))
 
             if get_id:
