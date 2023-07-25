@@ -203,7 +203,7 @@ class Webscrape:
                                 df_srv_out = pd.DataFrame({'icao_designator': str(aero_icao),'callsign_type': callsign_type,'frequency': frequency}, index=[0])
                                 df_srv = pd.concat([df_srv, df_srv_out], ignore_index=True)
             else:
-                logger.error(f"Aerodrome {aero_icao} does not exist")
+                logger.error(f"Aerodrome {aero_icao} does not exist!")
 
         return [df_ad_01, df_rwy, df_srv]
 
