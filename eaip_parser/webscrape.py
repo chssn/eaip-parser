@@ -428,24 +428,34 @@ class Webscrape:
 
         return [df_fir, df_uir, df_cta, df_tma]
 
-    def parse_enr03_data(self, section:str) -> pd.DataFrame:
-        """Parse the data from ENR-3"""
+    def parse_enr_03_data(self, section:str) -> pd.DataFrame:
+        """Parse the data from ENR-3.1 to 3.3"""
 
-        df_columns = ['name', 'route']
-        df_enr_03 = pd.DataFrame(columns=df_columns)
-        logger.info("Parsing "+ self.country +"-ENR-3."+ section +" data to obtain ATS routes...")
-        get_enr_03 = self.get_table_soup(self.country + "-ENR-3."+ section +"-en-GB.html")
-        list_tables = get_enr_03.find_all("tbody")
-        for row in list_tables:
-            get_airway_name = self.search("([A-Z]{1,2}[\d]{1,4})", "TEN_ROUTE_RTE;TXT_DESIG", str(row))
-            get_airway_route = self.search("([A-Z]{3,5})", "T(DESIGNATED_POINT|DME|VOR|NDB);CODE_ID", str(row))
-            print_route = ''
-            if get_airway_name:
-                for point in get_airway_route:
-                    print_route += str(point[0]) + "/"
-                df_out = pd.DataFrame({'name': str(get_airway_name[0]), 'route': str(print_route).rstrip('/')}, index=[0])
-                df_enr_03 = pd.concat([df_enr_03, df_out], ignore_index=True)
-        return df_enr_03
+        section = str(section)
+        if re.match(r"^[1-3]{1}$", section):
+            df_columns_location = ['name', 'type', 'lat', 'lon']
+            df_locations = pd.DataFrame(columns=df_columns_location)
+            df_columns = ['name', 'route']
+            df_enr_03 = pd.DataFrame(columns=df_columns)
+            logger.info("Parsing "+ self.country +"-ENR-3."+ section +" data to obtain ATS routes...")
+            get_enr_03 = self.get_table_soup(self.country + "-ENR-3."+ section +"-en-GB.html")
+            list_tables = get_enr_03.find_all("tbody")
+            for row in list_tables:
+                get_airway_name = self.search("([A-Z]{1,2}[\d]{1,4})", "TEN_ROUTE_RTE;TXT_DESIG", str(row))
+                get_airway_route = self.search("([A-Z]{3,5})", "T(DESIGNATED_POINT|DME|VOR|NDB);CODE_ID", str(row))
+                get_point_lat = self.search("(\d{6}\.\d{2}[NS]|(?<!\d\.)\d{6}[NS])", "T(DESIGNATED_POINT|DME|VOR|NDB);GEO_LAT", str(row))
+                get_point_lon = self.search("(\d{7}\.\d{2}[EW]|(?<!\d\.)\d{7}[EW])", "T(DESIGNATED_POINT|DME|VOR|NDB);GEO_LONG", str(row))
+                print_route = ''
+                if get_airway_name:
+                    for point, point_lat, point_lon in zip(get_airway_route, get_point_lat, get_point_lon):
+                        print_route += str(point[0]) + "/"
+                        dfl_out = pd.DataFrame({'name': str(point[0]), 'type': str(point[1]), 'lat': str(point_lat[0]), 'lon': str(point_lon[0])}, index=[0])
+                        df_locations = pd.concat([df_locations, dfl_out], ignore_index=True)
+                    df_out = pd.DataFrame({'name': str(get_airway_name[0]), 'route': str(print_route).rstrip('/')}, index=[0])
+                    df_enr_03 = pd.concat([df_enr_03, df_out], ignore_index=True)
+            return [df_enr_03, df_locations]
+        else:
+            raise ValueError("This function expects the section variable to be in the range of 1 to 3.")
 
     def parse_enr04_data(self, sub:str) -> pd.DataFrame:
         """Parse the data from ENR-4"""
@@ -553,14 +563,16 @@ class Webscrape:
         enr_02[2].to_csv(f'{full_dir}enr_02-CTA.csv')
         enr_02[3].to_csv(f'{full_dir}enr_02-TMA.csv')
 
-        enr_031 = self.parse_enr03_data('1') # returns single dataframe
-        enr_031.to_csv(f'{full_dir}enr_031.csv')
+        enr_031 = self.parse_enr_03_data('1') # returns single dataframe
+        enr_031[0].to_csv(f'{full_dir}enr_031.csv')
+        enr_031[1].to_csv(f'{full_dir}enr_031_points.csv')
 
-        enr_033 = self.parse_enr03_data('3') # returns single dataframe
-        enr_033.to_csv(f'{full_dir}enr_033.csv')
+        enr_033 = self.parse_enr_03_data('3') # returns single dataframe
+        enr_033[0].to_csv(f'{full_dir}enr_033.csv')
+        enr_033[1].to_csv(f'{full_dir}enr_033_points.csv')
 
-        enr_035 = self.parse_enr03_data('5') # returns single dataframe
-        enr_035.to_csv(f'{full_dir}enr_035.csv')
+        #enr_035 = self.parse_enr03_data('5') # returns single dataframe
+        #enr_035.to_csv(f'{full_dir}enr_035.csv')
 
         enr_041 = self.parse_enr04_data('1') # returns single dataframe
         enr_041.to_csv(f'{full_dir}enr_041.csv')
