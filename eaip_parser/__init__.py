@@ -10,3 +10,5 @@ Chris Parkinson (@chssn)
 # Third Party Libraries
 
 # Local Libraries
+
+__version__ = "0.0.0"
