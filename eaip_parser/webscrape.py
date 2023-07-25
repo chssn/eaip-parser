@@ -25,11 +25,13 @@ warnings.filterwarnings("ignore", category=UserWarning)
 class Webscrape:
     """Class to scrape data from the given AIRAC eAIP URL"""
 
-    def __init__(self, next_cycle:bool=True, country_code:str="EG"):
+    def __init__(self, next_cycle:bool=True, country_code:str="EG", date_in=0):
         airac_cycle = airac.Airac()
-        self.cycle = airac_cycle.cycle(next_cycle=next_cycle)
-        self.cycle_url = airac_cycle.url(next_cycle=next_cycle)
-        self.country = country_code
+        self.cycle_url = airac_cycle.url(next_cycle=next_cycle, date_in=date_in)
+        if re.match(r"^[A-Z]{2}$", country_code.upper()):
+            self.country = country_code.upper()
+        else:
+            raise ValueError("Expected a two character country code such as 'EG'")
 
     def get_table_soup(self, post_url:str) -> BeautifulSoup:
         """Parse the given table into a beautifulsoup object"""
