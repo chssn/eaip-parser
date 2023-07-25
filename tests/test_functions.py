@@ -11,6 +11,7 @@ Chris Parkinson (@chssn)
 import pytest
 
 # Local Libraries
+import eaip_parser.functions as functions
 from eaip_parser.functions import Geo
 
 def test_north_south():
@@ -38,6 +39,12 @@ def test_plus_minus():
     with pytest.raises(ValueError):
         Geo.plus_minus("--")
 
+def test_split():
+    """split"""
+    assert functions.split("hI8829!!") == ["h", "I", "8", "8", "2", "9", "!", "!"]
+    with pytest.raises(ValueError):
+        functions.split(8829)
+
 def test_back_bearing():
     """back_bearing"""
     test_cases = [
@@ -62,3 +69,67 @@ def test_back_bearing():
         Geo.back_bearing(-4)
     with pytest.raises(ValueError):
         Geo.back_bearing("A")
+
+def test_dd2dms():
+    """dd2dms"""
+    test_cases = [
+        (51.77592, 1.86495, "N051.46.33.31 E001.51.53.82"),
+        (-51.77592, -1.86495, "S051.46.33.31 W001.51.53.82"),
+        (500.498, 865.6498, "N500.29.52.8 E865.38.59.28"),
+        (-500.498, -865.6498, "S500.29.52.8 W865.38.59.28"),
+    ]
+    for lat, lon, expected_result in test_cases:
+        assert Geo.dd2dms(lat, lon) == expected_result
+
+    with pytest.raises(ValueError):
+        Geo.dd2dms(1.7, 2)
+    with pytest.raises(ValueError):
+        Geo.dd2dms(-1, 2.7)
+    with pytest.raises(ValueError):
+        Geo.dd2dms(1, 2)
+    with pytest.raises(ValueError):
+        Geo.dd2dms("A", 2)
+    with pytest.raises(ValueError):
+        Geo.dd2dms(1.7, "B")
+    with pytest.raises(ValueError):
+        Geo.dd2dms("A", "B")
+
+def test_dms2dd():
+    """dms2dd"""
+    test_cases = [
+        ("N051.46.33.31", "E001.51.53.82", [51.77592, 1.86495]),
+        ("S051.46.33.31", "W001.51.53.82", [-51.77592, -1.86495]),
+        ("N500.29.52.8", "E865.38.59.28", [500.498, 865.6498]),
+        ("S500.29.52.8", "W865.38.59.28", [-500.498, -865.6498]),
+        ("051.46.33.31N", "001.51.53.82E", [51.77592, 1.86495]),
+        ("051.46.33.31S", "001.51.53.82W", [-51.77592, -1.86495]),
+        ("500.29.52.8N", "865.38.59.28E", [500.498, 865.6498]),
+        ("500.29.52.8S", "865.38.59.28W", [-500.498, -865.6498]),
+        ("N051.46.33", "E001.51.53", [51.77592, 1.86495]),
+        ("S051.46.33", "W001.51.53", [-51.77592, -1.86495]),
+        ("N500.29.52", "E865.38.59", [500.498, 865.6498]),
+        ("S500.29.52", "W865.38.59", [-500.498, -865.6498]),
+        ("051.46.33.31N", "001.51.53E", [51.77592, 1.86495]),
+        ("051.46.33S", "001.51.53W", [-51.77592, -1.86495]),
+        ("500.29.52N", "865.38.59E", [500.498, 865.6498]),
+        ("500.29.52S", "865.38.59W", [-500.498, -865.6498]),
+    ]
+    for lat, lon, expected_result in test_cases:
+        pytest.approx(Geo.dms2dd(lat, lon), expected_result)
+
+    with pytest.raises(ValueError):
+        Geo.dms2dd("051.46.33.31", "001.51.53.82")
+    with pytest.raises(ValueError):
+        Geo.dms2dd("051.46.N33.31", "001.51.53.82")
+    with pytest.raises(ValueError):
+        Geo.dms2dd("051.46.33.31N", "001.51.53.82")
+    with pytest.raises(ValueError):
+        Geo.dms2dd("N051.46.", "E001.51.53.82")
+    with pytest.raises(ValueError):
+        Geo.dms2dd("N051.46.33.31", "E001")
+    with pytest.raises(TypeError):
+        Geo.dms2dd(1.7, "B")
+    with pytest.raises(TypeError):
+        Geo.dms2dd("A", 1.7)
+    with pytest.raises(ValueError):
+        Geo.dms2dd("A", "B")
