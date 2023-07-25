@@ -69,7 +69,7 @@ class Webscrape:
         list_aerodrome_list = get_aerodrome_list.find_all("h3")
         for row in list_aerodrome_list:
             # search for aerodrome icao designator and name
-            get_aerodrome = re.search(rf"({self.country}[A-Z]{{2}})(\n[\s\S]{{7}}\n[\s\S]{{8}})([A-Z]{{4}}.*)(\n[\s\S]{{6}}<\/a>)", str(row))
+            get_aerodrome = re.search(rf"({self.country}[A-Z]{{2}})\n.*\n.*\n?\s{{8}}([\w\s\/\-\']+)\n", str(row))
             if get_aerodrome:
                 # Place each aerodrome into the DB
                 df_out = pd.DataFrame({
@@ -77,7 +77,7 @@ class Webscrape:
                     'verified': 0,
                     'location': 0,
                     'elevation': 0,
-                    'name': str(get_aerodrome[3]),
+                    'name': str(get_aerodrome[2]),
                     'magnetic_variation': 0
                     }, index=[0])
                 df_store = pd.concat([df_store, df_out], ignore_index=True)
