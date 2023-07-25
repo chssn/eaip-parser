@@ -352,7 +352,7 @@ class Webscrape:
                     start_lon = re.search(r"\>([\d]{6,7})(E|W)\<", str(search_data[row-count_back]))
                     count_back += 1
                 while start_lat is None:
-                    start_lat = re.search(r"\>([\d]{6,7})(N|S)\<", str(search_data[row-count_back]))
+                    start_lat = re.search(r"\>([\d]{6,7}[NS]{1})\<", str(search_data[row-count_back]))
                     count_back += 1
 
                 # work forward to find the centre point and end lat/lon
@@ -362,22 +362,22 @@ class Webscrape:
                 mid_lat = None
                 mid_lon = None
                 while mid_lat is None:
-                    mid_lat = re.search(r"\>([\d]{6,7})(N|S)\<", str(search_data[row+count_forward]))
+                    mid_lat = re.search(r"\>([\d]{6,7}[NS]{1})\<", str(search_data[row+count_forward]))
                     count_forward += 1
                 while mid_lon is None:
-                    mid_lon = re.search(r"\>([\d]{6,7})(E|W)\<", str(search_data[row+count_forward]))
+                    mid_lon = re.search(r"\>([\d]{6,7}[EW]{1})\<", str(search_data[row+count_forward]))
                     count_forward += 1
                 while end_lat is None:
-                    end_lat = re.search(r"\>([\d]{6,7})(N|S)\<", str(search_data[row+count_forward]))
+                    end_lat = re.search(r"\>([\d]{6,7}[NS]{1})\<", str(search_data[row+count_forward]))
                     count_forward += 1
                 while end_lon is None:
-                    end_lon = re.search(r"\>([\d]{6,7})(E|W)\<", str(search_data[row+count_forward]))
+                    end_lon = re.search(r"\>([\d]{6,7}[EW]{1})\<", str(search_data[row+count_forward]))
                     count_forward += 1
 
                 # convert from dms to dd
-                start_dd = self.dms2dd(start_lat[1], start_lon[1], start_lat[2], start_lon[2])
-                mid_dd = self.dms2dd(mid_lat[1], mid_lon[1], mid_lat[2], mid_lon[2])
-                end_dd = self.dms2dd(end_lat[1], end_lon[1], end_lat[2], end_lon[2])
+                start_dd = functions.Geo.dms2dd(start_lat[0], start_lon[0])
+                mid_dd = functions.Geo.dms2dd(mid_lat[0], mid_lon[0])
+                end_dd = functions.Geo.dms2dd(end_lat[0], end_lon[0])
 
                 arc_out = self.generate_semicircle(float(mid_dd[0]), float(mid_dd[1]), float(start_dd[0]), float(start_dd[1]), float(end_dd[0]), float(end_dd[1]), cacw)
                 for coord in arc_out:
@@ -465,13 +465,13 @@ class Webscrape:
         else:
             raise ValueError("This function expects the section variable to be in the range of 1 to 3.")
 
-    def parse_enr04_data(self, sub:str) -> pd.DataFrame:
+    def parse_enr04_data(self, section:str) -> pd.DataFrame:
         """Parse the data from ENR-4"""
 
         df_columns = ['name', 'type', 'coords', 'freq']
         df_store = pd.DataFrame(columns=df_columns)
-        logger.info("Parsing "+ self.country +"-ENR-4."+ sub +" Data (RADIO NAVIGATION AIDS - EN-ROUTE)...")
-        get_data = self.get_table_soup(self.country + "-ENR-4."+ sub +"-en-GB.html")
+        logger.info("Parsing "+ self.country +"-ENR-4."+ section +" Data (RADIO NAVIGATION AIDS - EN-ROUTE)...")
+        get_data = self.get_table_soup(self.country + "-ENR-4."+ section +"-en-GB.html")
         list_data = get_data.find_all("tr", class_ = "Table-row-type-3")
         for row in list_data:
             # Split out the point name
@@ -492,7 +492,7 @@ class Webscrape:
                     point_lon.group(3)
                 )
 
-                if sub == "1":
+                if section == "1":
                     # Do this for ENR-4.1
                     # Set the navaid type correctly
                     if name[1] == "VORDME":
@@ -515,7 +515,7 @@ class Webscrape:
                     except AttributeError as err:
                         logger.warning(err)
                         continue
-                elif sub == "4":
+                elif section == "4":
                     # Add fix to the aerodromeDB
                     df_out = pd.DataFrame({
                         'name': str(name[1]),
@@ -591,29 +591,24 @@ class Webscrape:
         enr_051 = self.parse_enr_051_data() # returns single dataframe
         enr_051.to_csv(f'{full_dir}enr_051.csv')
 
-        return [ad_01, ad_02, enr_016, enr_02, enr_031, enr_033, enr_035, enr_041, enr_044, enr_051]
+        return [ad_01, ad_02, enr_016, enr_02, enr_031, enr_033, enr_041, enr_044, enr_051]
 
     @staticmethod
     def search(find, name:str, string:str):
         """Searches for all instances of a string"""
-        search_string = find + "(?=<\/span>.*>" + name + ")"
-        return re.findall(f"{search_string}", string)
-
-    @staticmethod
-    def split(word:str) -> list:
-        """Splits a word and returns as a list"""
-        return [char for char in word]
+        search_string = find + "(?=</span>.*>" + name + ")"
+        return re.findall(rf"{search_string}", string)
 
     def sct_location_builder(self, lat:str, lon:str, lat_ns:str, lon_ew:str) -> str:
         """Returns an SCT file compliant location"""
 
-        lat_split = self.split(lat) # split the lat into individual digits
+        lat_split = functions.split(lat) # split the lat into individual digits
         if len(lat_split) > 6:
             lat_print = f"{lat_ns}{lat_split[0]}{lat_split[1]}.{lat_split[2]}{lat_split[3]}.{lat_split[4]}{lat_split[5]}.{lat_split[7]}{lat_split[8]}"
         else:
             lat_print = f"{lat_ns}{lat_split[0]}{lat_split[1]}.{lat_split[2]}{lat_split[3]}.{lat_split[4]}{lat_split[5]}.00"
 
-        lon_split = self.split(lon)
+        lon_split = functions.split(lon)
         if len(lon_split) > 7:
             lon_print = f"{lon_ew}{lon_split[0]}{lon_split[1]}{lon_split[2]}.{lon_split[3]}{lon_split[4]}.{lon_split[5]}{lon_split[6]}.{lon_split[8]}{lon_split[9]}"
         else:
@@ -653,33 +648,6 @@ class Webscrape:
 
         return full_boundary.rstrip('/')
 
-    def dms2dd(self, lat:str, lon:str, ns:str, ew:str) -> list:
-        """Converts Degress, Minutes and Seconds to Decimal Degrees"""
-
-        lat_split = self.split(lat)
-        lon_split = self.split(lon)
-
-        lat_dd = lat_split[0] + lat_split[1]
-        lat_mm = lat_split[2] + lat_split[3]
-        lat_ss = lat_split[4] + lat_split[5]
-
-        # lat N or S (+/-) lon E or W (+/-)
-
-        lat_out = int(lat_dd) + int(lat_mm) / 60 + int(lat_ss) / 3600
-
-        lon_dd = lon_split[0] + lon_split[1] + lon_split[2]
-        lon_mm = lon_split[3] + lon_split[4]
-        lon_ss = lon_split[5] + lon_split[6]
-
-        lon_out = int(lon_dd) + int(lon_mm) / 60 + int(lon_ss) / 3600
-
-        if ns == "S":
-            lat_out = lat_out - (lat_out * 2)
-        if ew == "W":
-            lon_out = lon_out - (lon_out * 2)
-
-        return [lat_out, lon_out]
-
     def generate_semicircle(self, center_x, center_y, start_x, start_y, end_x, end_y, direction):
         """Dreate a semicircle. Direction is 1 for clockwise and 2 for anti-clockwise"""
         from geographiclib.geodesic import Geodesic
@@ -699,57 +667,14 @@ class Webscrape:
         if direction == 1: # if cw
             while round(start_brg) != round(end_brg_compass):
                 arc_coords = Geodesic.WGS84.Direct(center_x, center_y, start_brg, start_dst)
-                arc_out.append(self.dd2dms(arc_coords['lat2'], arc_coords['lon2']))
+                arc_out.append(functions.Geo.dd2dms(arc_coords['lat2'], arc_coords['lon2']))
                 start_brg = ((start_brg + 1) % 360)
                 print(start_brg, end_brg_compass)
         elif direction == 2: # if acw
             while round(start_brg) != round(end_brg_compass):
                 arc_coords = Geodesic.WGS84.Direct(center_x, center_y, start_brg, start_dst)
-                arc_out.append(self.dd2dms(arc_coords['lat2'], arc_coords['lon2']))
+                arc_out.append(functions.Geo.dd2dms(arc_coords['lat2'], arc_coords['lon2']))
                 start_brg = ((start_brg - 1) % 360)
                 print(start_brg, end_brg_compass)
 
         return arc_out
-
-    @staticmethod
-    def dd2dms(latitude:float, longitude:float) -> str:
-        """Converts Decimal Degrees to Degress, Minutes and Seconds"""
-
-        # math.modf() splits whole number and decimal into tuple
-        # eg 53.3478 becomes (0.3478, 53)
-        split_degx = math.modf(longitude)
-
-        # the whole number [index 1] is the degrees
-        degrees_x = int(split_degx[1])
-
-        # multiply the decimal part by 60: 0.3478 * 60 = 20.868
-        # split the whole number part of the total as the minutes: 20
-        # abs() absoulte value - no negative
-        minutes_x = abs(int(math.modf(split_degx[0] * 60)[1]))
-
-        # multiply the decimal part of the split above by 60 to get the seconds
-        # 0.868 x 60 = 52.08, round excess decimal places to 2 places
-        # abs() absoulte value - no negative
-        seconds_x = abs(round(math.modf(split_degx[0] * 60)[0] * 60,2))
-
-        # repeat for latitude
-        split_degy = math.modf(latitude)
-        degrees_y = int(split_degy[1])
-        minutes_y = abs(int(math.modf(split_degy[0] * 60)[1]))
-        seconds_y = abs(round(math.modf(split_degy[0] * 60)[0] * 60,2))
-
-        # account for E/W & N/S
-        if longitude < 0:
-            e_or_w = "W"
-        else:
-            e_or_w = "E"
-
-        if latitude < 0:
-            n_or_s = "S"
-        else:
-            n_or_s = "N"
-
-        # abs() remove negative from degrees, was only needed for if-else above
-        output = (n_or_s + str(abs(round(degrees_y))).zfill(3) + "." + str(round(minutes_y)).zfill(2) + "." + str(seconds_y).zfill(3) + " " + e_or_w + str(abs(round(degrees_x))).zfill(3) + "." + str(round(minutes_x)).zfill(2) + "." + str(seconds_x).zfill(3))
-
-        return output
