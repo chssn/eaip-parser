@@ -130,39 +130,48 @@ class Webscrape:
                     continue
 
                 df_ad_01.at[index, 'verified'] = 1
-                df_ad_01.at[index, 'magnetic_variation'] = str(float_mag_var)
+                df_ad_01.at[index, 'magnetic_variation'] = float(float_mag_var)
                 df_ad_01.at[index, 'location'] = str(full_location)
-                df_ad_01.at[index, 'elevation'] = str(aerodrome_elev[2])
+                df_ad_01.at[index, 'elevation'] = int(aerodrome_elev[2])
 
                 # Find runway locations
                 aerodrome_runways = self.search("([\d]{2}[L|C|R]?)", "TRWY_DIRECTION;TXT_DESIG", str(aerodrome_ad_02_12))
                 aerodrome_runways_lat = self.search("([\d]{6}\.[\d]{2}[N|S]{1})", "TRWY_CLINE_POINT;GEO_LAT", str(aerodrome_ad_02_12))
                 aerodrome_runways_long = self.search("([\d]{7}\.[\d]{2}[E|W]{1})", "TRWY_CLINE_POINT;GEO_LONG", str(aerodrome_ad_02_12))
-                aerodrome_runways_elev = self.search("([\d]{3}\.[\d]{1})", "TRWY_CLINE_POINT;VAL_ELEV", str(aerodrome_ad_02_12))
+                aerodrome_runways_elev = self.search("([\d]{1,3})", "TRWY_CLINE_POINT;VAL_ELEV", str(aerodrome_ad_02_12))
                 aerodrome_runways_bearing = self.search("([\d]{3}\.[\d]{2}.)", "TRWY_DIRECTION;VAL_TRUE_BRG", str(aerodrome_ad_02_12))
-                aerodrome_runways_len = self.search("([\d]{3,4})", "TRWY;VAL_LEN", str(aerodrome_ad_02_12))
+                aerodrome_runways_len = self.search("([\d]{3,4})", "TRWY;VAL_LEN;", str(aerodrome_ad_02_12))
 
-                for rwy, lat, lon, elev, brg, rwy_len in zip(aerodrome_runways, aerodrome_runways_lat, aerodrome_runways_long, aerodrome_runways_elev, aerodrome_runways_bearing, aerodrome_runways_len):
-                    # Add runway to the aerodromeDB
-                    lat_split = re.search(r"([\d]{6}\.[\d]{2})([N|S]{1})", str(lat))
-                    lon_split = re.search(r"([\d]{7}\.[\d]{2})([E|W]{1})", str(lon))
+                if len(aerodrome_runways) == len(aerodrome_runways_lat) and len(aerodrome_runways) == len(aerodrome_runways_long) and len(aerodrome_runways) == len(aerodrome_runways_elev) and len(aerodrome_runways) == len(aerodrome_runways_bearing) and len(aerodrome_runways) == len(aerodrome_runways_len):
+                    for rwy, lat, lon, elev, brg, rwy_len in zip(aerodrome_runways, aerodrome_runways_lat, aerodrome_runways_long, aerodrome_runways_elev, aerodrome_runways_bearing, aerodrome_runways_len):
+                        # Add runway to the aerodromeDB
+                        lat_split = re.search(r"([\d]{6}\.[\d]{2})([N|S]{1})", str(lat))
+                        lon_split = re.search(r"([\d]{7}\.[\d]{2})([E|W]{1})", str(lon))
 
-                    loc = self.sct_location_builder(
-                        lat_split.group(1),
-                        lon_split.group(1),
-                        lat_split.group(2),
-                        lon_split.group(2)
-                        )
+                        loc = self.sct_location_builder(
+                            lat_split.group(1),
+                            lon_split.group(1),
+                            lat_split.group(2),
+                            lon_split.group(2)
+                            )
 
-                    df_rwy_out = pd.DataFrame({
-                        'icao_designator': str(aero_icao),
-                        'runway': str(rwy),
-                        'location': str(loc),
-                        'elevation': str(elev),
-                        'bearing': str(brg.rstrip('°')),
-                        'length': str(rwy_len)
-                        }, index=[0])
-                    df_rwy = pd.concat([df_rwy, df_rwy_out], ignore_index=True)
+                        df_rwy_out = pd.DataFrame({
+                            'icao_designator': str(aero_icao),
+                            'runway': str(rwy),
+                            'location': str(loc),
+                            'elevation': int(elev),
+                            'bearing': float(brg.rstrip('°')),
+                            'length': int(rwy_len)
+                            }, index=[0])
+                        df_rwy = pd.concat([df_rwy, df_rwy_out], ignore_index=True)
+                else:
+                    logger.warning(f"Runway data mismatch for {aero_icao}!")
+                    logger.info(f"Rwy:  {aerodrome_runways}")
+                    logger.info(f"Lat:  {aerodrome_runways_lat}")
+                    logger.info(f"Lon:  {aerodrome_runways_long}")
+                    logger.info(f"Elev: {aerodrome_runways_elev}")
+                    logger.info(f"Brg:  {aerodrome_runways_bearing}")
+                    logger.info(f"Len:  {aerodrome_runways_len}")
 
                 # Find air traffic services
                 aerodrome_services = self.search("(APPROACH|GROUND|DELIVERY|TOWER|DIRECTOR|INFORMATION|RADAR|RADIO|FIRE|EMERGENCY)", "TCALLSIGN_DETAIL", str(aerodrome_ad_02_18))
