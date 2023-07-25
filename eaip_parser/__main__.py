@@ -13,5 +13,4 @@ Chris Parkinson (@chssn)
 from . import webscrape
 
 run_it = webscrape.Webscrape()
-#run_it.parse_ad_01_data()
 run_it.run()
