@@ -14,6 +14,7 @@ import pytest
 import requests
 
 # Local Libraries
+import tests.standard_test_cases as stc
 from eaip_parser.airac import Airac
 
 airac = Airac()
@@ -66,17 +67,13 @@ def test_cycle_known_date_next_cycle():
 
 def test_url_known_date():
     """url"""
-    assert airac.url(date_in="2020-01-02") == "https://www.aurora.nats.co.uk/htmlAIP/Publications/2020-01-02-AIRAC/html/eAIP/"
-    assert airac.url(date_in="2021-05-16") == "https://www.aurora.nats.co.uk/htmlAIP/Publications/2021-04-22-AIRAC/html/eAIP/"
-    assert airac.url(date_in="2023-12-26") == "https://www.aurora.nats.co.uk/htmlAIP/Publications/2023-11-30-AIRAC/html/eAIP/"
-    assert airac.url(date_in="2023-12-27") == "https://www.aurora.nats.co.uk/htmlAIP/Publications/2023-12-28-AIRAC/html/eAIP/"
+    for input_date, expected_result in stc.test_url_current:
+        assert airac.url(date_in=input_date) == expected_result
 
 def test_url_known_date_next_cycle():
     """url"""
-    assert airac.url(next_cycle=True, date_in="2020-01-02") == "https://www.aurora.nats.co.uk/htmlAIP/Publications/2020-01-30-AIRAC/html/eAIP/"
-    assert airac.url(next_cycle=True, date_in="2021-05-16") == "https://www.aurora.nats.co.uk/htmlAIP/Publications/2021-05-20-AIRAC/html/eAIP/"
-    assert airac.url(next_cycle=True, date_in="2023-12-26") == "https://www.aurora.nats.co.uk/htmlAIP/Publications/2023-12-28-AIRAC/html/eAIP/"
-    assert airac.url(next_cycle=True, date_in="2023-12-27") == "https://www.aurora.nats.co.uk/htmlAIP/Publications/2024-01-25-AIRAC/html/eAIP/"
+    for input_date, expected_result in stc.test_url_next:
+        assert airac.url(next_cycle=True, date_in=input_date) == expected_result
 
 def test_url_current_cycle():
     """url"""
