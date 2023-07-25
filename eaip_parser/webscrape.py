@@ -39,10 +39,7 @@ class Webscrape:
         address = self.cycle_url + post_url
         logger.debug(address)
 
-        try:
-            response = requests.get(address, timeout=30)
-        except requests.ConnectionError as err:
-            logger.exception(f"Unable to connect to {address} with error {err}")
+        response = requests.get(address, timeout=30)
 
         if response.status_code != 200:
             logger.error(f"Unable to connect to {address} with status code {response.status_code}")
