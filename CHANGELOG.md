@@ -1,5 +1,12 @@
 <!--next-version-placeholder-->
 
+## v0.1.1 (2023-07-25)
+### Fix
+* Incorrect escaping of regex ([`65255e7`](https://github.com/chssn/eaip-parser/commit/65255e7a2202901d8a744ab2f27cb552d459e21f))
+
+### Performance
+* Removed unused library ([`7a47436`](https://github.com/chssn/eaip-parser/commit/7a474369ad25c16ff0e4204b0cbcae5727917017))
+
 ## v0.1.0 (2023-07-25)
 ### Feature
 * Parses all point lat lon data ([`a30f0da`](https://github.com/chssn/eaip-parser/commit/a30f0dab6104f7bc19a97b27818bec3e140d9558))
