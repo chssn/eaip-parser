@@ -104,7 +104,13 @@ class Geo:
                 n_or_s = "N"
 
             # abs() remove negative from degrees, was only needed for if-else above
-            output = (n_or_s + str(abs(round(degrees_y))).zfill(3) + "." + str(round(minutes_y)).zfill(2) + "." + str(seconds_y).zfill(3) + " " + e_or_w + str(abs(round(degrees_x))).zfill(3) + "." + str(round(minutes_x)).zfill(2) + "." + str(seconds_x).zfill(3))
+            output = (n_or_s + str(abs(round(degrees_y))).zfill(3) +
+                      "." + str(round(minutes_y)).zfill(2) +
+                      "." + str(seconds_y).zfill(3) +
+                      " " + e_or_w + str(abs(round(degrees_x))).zfill(3) +
+                      "." + str(round(minutes_x)).zfill(2) +
+                      "." + str(seconds_x).zfill(3)
+                      )
 
             return output
         else:
@@ -141,4 +147,7 @@ class Geo:
             logger.debug(f"{lon} {lon_split}")
             logger.debug(n_or_s)
             logger.debug(e_or_w)
-            raise ValueError("This function accepts lat/lon in the format DDD.MMM.SSS.sss prefixed or suffixed by N, S, E or W")
+            raise ValueError(
+                "This function accepts lat/lon in the format DDD.MMM.SSS.sss \
+                     prefixed or suffixed by N, S, E or W"
+                )

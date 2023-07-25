@@ -13,6 +13,7 @@ import warnings
 import pandas as pd
 import requests
 from bs4 import BeautifulSoup
+from geographiclib.geodesic import Geodesic
 from loguru import logger
 
 # Local Libraries
@@ -68,7 +69,9 @@ class Webscrape:
         list_aerodrome_list = get_aerodrome_list.find_all("h3")
         for row in list_aerodrome_list:
             # search for aerodrome icao designator and name
-            get_aerodrome = re.search(rf"({self.country}[A-Z]{{2}})\n.*\n.*\n?\s{{8}}([\w\s\/\-\']+)\n", str(row))
+            get_aerodrome = re.search(
+                rf"({self.country}[A-Z]{{2}})\n.*\n.*\n?\s{{8}}([\w\s\/\-\']+)\n", str(row)
+                )
             if get_aerodrome:
                 # Place each aerodrome into the DB
                 df_out = pd.DataFrame({
@@ -105,13 +108,21 @@ class Webscrape:
                 aerodrome_ad_02_18 = get_runways.find(id=aero_icao + "-AD-2.18")
 
                 # Find current magnetic variation for this aerodrome
-                aerodrome_mag_var = self.search(r"([\d]{1}\.[\d]{2}).([W|E]{1})", "TAD_HP;VAL_MAG_VAR", str(aerodrome_ad_02_02))
+                aerodrome_mag_var = self.search(
+                    r"([\d]{1}\.[\d]{2}).([W|E]{1})", "TAD_HP;VAL_MAG_VAR", str(aerodrome_ad_02_02)
+                    )
                 plus_minus = functions.Geo.plus_minus(aerodrome_mag_var[0][1])
                 float_mag_var = plus_minus + aerodrome_mag_var[0][0]
 
                 # Find lat/lon/elev for aerodrome
-                aerodrome_lat = re.search(r'(Lat: )(<span class="SD" id="ID_[\d]{7,}">)([\d]{6})([N|S]{1})', str(aerodrome_ad_02_02))
-                aerodrome_lon = re.search(r"(Long: )(<span class=\"SD\" id=\"ID_[\d]{7,}\">)([\d]{7})([E|W]{1})", str(aerodrome_ad_02_02))
+                aerodrome_lat = re.search(
+                    r'(Lat: )(<span class="SD" id="ID_[\d]{7,}">)([\d]{6})([N|S]{1})',
+                    str(aerodrome_ad_02_02)
+                    )
+                aerodrome_lon = re.search(
+                    r"(Long: )(<span class=\"SD\" id=\"ID_[\d]{7,}\">)([\d]{7})([E|W]{1})",
+                    str(aerodrome_ad_02_02)
+                    )
                 aerodrome_elev = re.search(r"(VAL_ELEV\;)([\d]{1,4})", str(aerodrome_ad_02_02))
 
                 logger.trace(aerodrome_lat)
@@ -134,15 +145,46 @@ class Webscrape:
                 df_ad_01.at[index, 'elevation'] = int(aerodrome_elev[2])
 
                 # Find runway locations
-                aerodrome_runways = self.search(r"([\d]{2}[L|C|R]?)", "TRWY_DIRECTION;TXT_DESIG", str(aerodrome_ad_02_12))
-                aerodrome_runways_lat = self.search(r"([\d]{6}\.[\d]{2}[N|S]{1})", "TRWY_CLINE_POINT;GEO_LAT", str(aerodrome_ad_02_12))
-                aerodrome_runways_long = self.search(r"([\d]{7}\.[\d]{2}[E|W]{1})", "TRWY_CLINE_POINT;GEO_LONG", str(aerodrome_ad_02_12))
-                aerodrome_runways_elev = self.search(r"([\d]{1,3})", "TRWY_CLINE_POINT;VAL_ELEV", str(aerodrome_ad_02_12))
-                aerodrome_runways_bearing = self.search(r"([\d]{3}\.[\d]{2}.)", "TRWY_DIRECTION;VAL_TRUE_BRG", str(aerodrome_ad_02_12))
-                aerodrome_runways_len = self.search(r"([\d]{3,4})", "TRWY;VAL_LEN;", str(aerodrome_ad_02_12))
+                aerodrome_runways = self.search(
+                    r"([\d]{2}[L|C|R]?)", "TRWY_DIRECTION;TXT_DESIG",
+                    str(aerodrome_ad_02_12)
+                    )
+                aerodrome_runways_lat = self.search(
+                    r"([\d]{6}\.[\d]{2}[N|S]{1})", "TRWY_CLINE_POINT;GEO_LAT",
+                    str(aerodrome_ad_02_12)
+                    )
+                aerodrome_runways_long = self.search(
+                    r"([\d]{7}\.[\d]{2}[E|W]{1})", "TRWY_CLINE_POINT;GEO_LONG",
+                    str(aerodrome_ad_02_12)
+                    )
+                aerodrome_runways_elev = self.search(
+                    r"([\d]{1,3})", "TRWY_CLINE_POINT;VAL_ELEV",
+                    str(aerodrome_ad_02_12)
+                    )
+                aerodrome_runways_bearing = self.search(
+                    r"([\d]{3}\.[\d]{2}.)", "TRWY_DIRECTION;VAL_TRUE_BRG",
+                    str(aerodrome_ad_02_12)
+                    )
+                aerodrome_runways_len = self.search(
+                    r"([\d]{3,4})", "TRWY;VAL_LEN;",
+                    str(aerodrome_ad_02_12)
+                    )
 
-                if len(aerodrome_runways) == len(aerodrome_runways_lat) and len(aerodrome_runways) == len(aerodrome_runways_long) and len(aerodrome_runways) == len(aerodrome_runways_elev) and len(aerodrome_runways) == len(aerodrome_runways_bearing) and len(aerodrome_runways) == len(aerodrome_runways_len):
-                    for rwy, lat, lon, elev, brg, rwy_len in zip(aerodrome_runways, aerodrome_runways_lat, aerodrome_runways_long, aerodrome_runways_elev, aerodrome_runways_bearing, aerodrome_runways_len):
+                if (len(aerodrome_runways) == len(aerodrome_runways_lat) and
+                    len(aerodrome_runways) == len(aerodrome_runways_long) and
+                    len(aerodrome_runways) == len(aerodrome_runways_elev) and
+                    len(aerodrome_runways) == len(aerodrome_runways_bearing) and
+                    len(aerodrome_runways) == len(aerodrome_runways_len)):
+
+                    zip_aerodrome = zip(
+                        aerodrome_runways,
+                        aerodrome_runways_lat,
+                        aerodrome_runways_long,
+                        aerodrome_runways_elev,
+                        aerodrome_runways_bearing,
+                        aerodrome_runways_len
+                        )
+                    for rwy, lat, lon, elev, brg, rwy_len in zip_aerodrome:
                         # Add runway to the aerodromeDB
                         lat_split = re.search(r"([\d]{6}\.[\d]{2})([N|S]{1})", str(lat))
                         lon_split = re.search(r"([\d]{7}\.[\d]{2})([E|W]{1})", str(lon))
@@ -173,8 +215,17 @@ class Webscrape:
                     logger.info(f"Len:  {aerodrome_runways_len}")
 
                 # Find air traffic services
-                aerodrome_services = self.search("(APPROACH|GROUND|DELIVERY|TOWER|DIRECTOR|INFORMATION|RADAR|RADIO|FIRE|EMERGENCY)", "TCALLSIGN_DETAIL", str(aerodrome_ad_02_18))
-                service_frequency = self.search(r"([\d]{3}\.[\d]{3})", "TFREQUENCY", str(aerodrome_ad_02_18))
+                aerodrome_services = self.search(
+                    "(APPROACH|GROUND|DELIVERY|TOWER|DIRECTOR|\
+                        INFORMATION|RADAR|RADIO|FIRE|EMERGENCY)",
+                    "TCALLSIGN_DETAIL",
+                    str(aerodrome_ad_02_18)
+                    )
+                service_frequency = self.search(
+                    r"([\d]{3}\.[\d]{3})",
+                    "TFREQUENCY",
+                    str(aerodrome_ad_02_18)
+                    )
 
                 last_srv = ''
                 if len(aerodrome_services) == len(service_frequency):
@@ -185,21 +236,33 @@ class Webscrape:
                         else:
                             s_type = str(srv)
                             last_srv = s_type
-                        df_srv_out = pd.DataFrame({'icao_designator': str(aero_icao),'callsign_type': s_type,'frequency': str(frq)}, index=[0])
+                        df_srv_out = pd.DataFrame({
+                            'icao_designator': str(aero_icao),
+                            'callsign_type': s_type,
+                            'frequency': str(frq)
+                            }, index=[0])
                         df_srv = pd.concat([df_srv, df_srv_out], ignore_index=True)
                 else:
                     # Complex aerodrome setups with multiple frequencies for the same job
                     logger.warning(f"Aerodrome {aero_icao} has a complex comms structure!")
                     for row in aerodrome_ad_02_18.find_all("span"):
                         # get the full row and search between two "TCALLSIGN_DETAIL" objects
-                        table_row = re.search(r"(APPROACH|GROUND|DELIVERY|TOWER|DIRECTOR|INFORMATION|RADAR|RADIO|FIRE|EMERGENCY)", str(row))
+                        table_row = re.search(
+                            (r"(APPROACH|GROUND|DELIVERY|TOWER|DIRECTOR|"
+                             r"INFORMATION|RADAR|RADIO|FIRE|EMERGENCY)"),
+                            str(row)
+                            )
                         if table_row is not None:
                             callsign_type = table_row.group(1)
                         freq_row = re.search(r"([\d]{3}\.[\d]{3})", str(row))
                         if freq_row is not None:
                             frequency = str(freq_row.group(1))
                             if frequency != "121.500": # filter out guard frequencies
-                                df_srv_out = pd.DataFrame({'icao_designator': str(aero_icao),'callsign_type': callsign_type,'frequency': frequency}, index=[0])
+                                df_srv_out = pd.DataFrame({
+                                    'icao_designator': str(aero_icao),
+                                    'callsign_type': callsign_type,
+                                    'frequency': frequency
+                                    }, index=[0])
                                 df_srv = pd.concat([df_srv, df_srv_out], ignore_index=True)
             else:
                 logger.error(f"Aerodrome {aero_icao} does not exist!")
@@ -225,22 +288,47 @@ class Webscrape:
                     start = text.group(1)
                     end = text.group(2)
 
-                    # create an array of words to search through to try and match code range to destination airport
+                    # create an array of words to search through to try and
+                    # match a code range to destination airport
                     loc_array = get_p[1].text.split()
                     for loc in loc_array:
                         strip = re.search(r"([A-Za-z]{3,10})", loc)
                         if strip:
-                            dep = self.country + "\w{2}"
+                            dep = self.country + "\\w{2}"
                             # search the dataframe containing icao_codes
-                            name = df_ad_01[df_ad_01['name'].str.contains(strip.group(1), case=False, na=False)]
+                            name = df_ad_01[
+                                df_ad_01['name'].str.contains(strip.group(1), case=False, na=False)
+                                ]
                             if len(name.index) == 1:
-                                df_out = pd.DataFrame({'start': start,'end': end,'depart': dep,'arrive': name.iloc[0]['icao_designator'],'string': strip.group(1)}, index=[0])
+                                df_out = pd.DataFrame({
+                                    'start': start,
+                                    'end': end,
+                                    'depart': dep,
+                                    'arrive': name.iloc[0]['icao_designator'],
+                                    'string': strip.group(1)
+                                    }, index=[0])
                                 df_store = pd.concat([df_store, df_out], ignore_index=True)
-                            elif strip.group(1) == "RAF" or strip.group(1) == "Military" or strip.group(1) == "RNAS" or strip.group(1) == "NATO":
-                                df_out = pd.DataFrame({'start': start,'end': end,'depart': dep,'arrive': 'Military','string': strip.group(1)}, index=[0])
+                            elif (strip.group(1) == "RAF" or
+                                  strip.group(1) == "Military" or
+                                  strip.group(1) == "RNAS" or
+                                  strip.group(1) == "NATO"
+                                  ):
+                                df_out = pd.DataFrame({
+                                    'start': start,
+                                    'end': end,
+                                    'depart': dep,
+                                    'arrive': 'Military',
+                                    'string': strip.group(1)
+                                    }, index=[0])
                                 df_store = pd.concat([df_store, df_out], ignore_index=True)
                             elif strip.group(1) == "Transit":
-                                df_out = pd.DataFrame({'start': start,'end': end,'depart': dep,'arrive': loc_array[2],'string': strip.group(1)}, index=[0])
+                                df_out = pd.DataFrame({
+                                    'start': start,
+                                    'end': end,
+                                    'depart': dep,
+                                    'arrive': loc_array[2],
+                                    'string': strip.group(1)
+                                    }, index=[0])
                                 df_store = pd.concat([df_store, df_out], ignore_index=True)
 
         return df_store
@@ -257,22 +345,33 @@ class Webscrape:
         logger.info("Parsing "+ self.country +"-ENR-2.1 Data (FIR, UIR, TMA AND CTA)...")
         get_data = self.get_table_soup(self.country + "-ENR-2.1-en-GB.html")
 
-        # create a list of complex airspace areas with the direction of the arc for reference later on
+        # create a list of complex airspace areas with the
+        # direction of the arc for reference later on
         df_columns = ['area', 'number', 'direction']
         complex_areas = pd.DataFrame(columns=df_columns)
         row = 0
         complex_search_data = get_data.find_all("p") # find everything enclosed in <p></p> tags
         complex_len = len(complex_search_data)
         while row < complex_len:
-            title = re.search(r"id=\"ID_[\d]{8,10}\"\>([A-Z]*)\s(FIR|CTA|TMA|CTR)\s([0-9]{0,2})\<", str(complex_search_data[row]))
+            title = re.search(
+                r"id=\"ID_[\d]{8,10}\"\>([A-Z]*)\s(FIR|CTA|TMA|CTR)\s([0-9]{0,2})\<",
+                str(complex_search_data[row])
+                )
             if title:
                 print_title = f"{str(title.group(1))} {str(title.group(2))} {str(title.group(3))}"
 
-                direction = re.findall(r"(?<=\s)(anti-clockwise|clockwise)(?=\s)", str(complex_search_data[row+1]))
+                direction = re.findall(
+                    r"(?<=\s)(anti-clockwise|clockwise)(?=\s)",
+                    str(complex_search_data[row+1])
+                    )
                 if direction:
                     area_number = 0
                     for dtn in direction:
-                        ca_out = pd.DataFrame({'area': print_title, 'number': str(area_number), 'direction': str(dtn)}, index=[0])
+                        ca_out = pd.DataFrame({
+                            'area': print_title,
+                            'number': str(area_number),
+                            'direction': str(dtn)
+                            }, index=[0])
                         complex_areas = pd.concat([complex_areas, ca_out], ignore_index=True)
                         area_number += 1
                     row += 1
@@ -294,7 +393,9 @@ class Webscrape:
         while row < bar_length:
             # find an airspace
             title = re.search(r"TAIRSPACE;TXT_NAME", str(search_data[row]))
-            coords = re.search(r"(?:TAIRSPACE_VERTEX;GEO_L(?:AT|ONG);)([\d]{4})", str(search_data[row]))
+            coords = re.search(
+                r"(?:TAIRSPACE_VERTEX;GEO_L(?:AT|ONG);)([\d]{4})", str(search_data[row])
+                )
             callsign = re.search(r"TUNIT;TXT_NAME", str(search_data[row]))
             freq = re.search(r"TFREQUENCY;VAL_FREQ_TRANS", str(search_data[row]))
             arc = re.search(r"TAIRSPACE_VERTEX;VAL_RADIUS_ARC", str(search_data[row]))
@@ -303,7 +404,8 @@ class Webscrape:
                 # get the printed title
                 print_title = re.search(r"\>(.*)\<", str(search_data[row-1]))
                 if print_title:
-                    # search for FIR / UIR* / CTA / TMA in the printed title *removed as same extent of FIR in UK
+                    # search for FIR / UIR* / CTA / TMA in the printed title
+                    # *removed as same extent of FIR in UK
                     airspace = re.search(r"(FIR|CTA|TMA|CTR)", str(search_data[row-1]))
                     if airspace:
                         df_in_title = str(print_title.group(1))
@@ -318,7 +420,9 @@ class Webscrape:
 
             if (freq) and (first_freq is False):
                 # get the first (and only the first) printed callsign
-                print_frequency = re.search(r"\>(1[1-3]{1}[\d]{1}\.[\d]{3})\<", str(search_data[row-1]))
+                print_frequency = re.search(
+                    r"\>(1[1-3]{1}[\d]{1}\.[\d]{3})\<", str(search_data[row-1])
+                    )
                 if print_frequency:
                     frequency = print_frequency.group(1)
                     first_freq = True
@@ -334,8 +438,13 @@ class Webscrape:
                     arc_counter = 0
 
                 # is this going to be a clockwise or anti-clockwise arc?
-                complex_areas = pd.read_csv(f'{functions.work_dir}\\DataFrames\\enr_02-CW-ACW-Helper.csv', index_col=0)
-                cacw = complex_areas.loc[(complex_areas["area"].str.match(df_in_title)) & (complex_areas["number"] == arc_counter)]
+                complex_areas = pd.read_csv(
+                    f'{functions.work_dir}\\DataFrames\\enr_02-CW-ACW-Helper.csv', index_col=0
+                    )
+                cacw = complex_areas.loc[
+                    (complex_areas["area"].str.match(df_in_title)) &
+                    (complex_areas["number"] == arc_counter)
+                    ]
                 cacw = cacw['direction'].to_string(index=False)
                 print(cacw)
                 if cacw == "clockwise":
@@ -348,10 +457,12 @@ class Webscrape:
                 start_lon = None
                 start_lat = None
                 while start_lon is None:
-                    start_lon = re.search(r"\>([\d]{6,7})(E|W)\<", str(search_data[row-count_back]))
+                    start_lon = re.search(
+                        r"\>([\d]{6,7})(E|W)\<", str(search_data[row-count_back]))
                     count_back += 1
                 while start_lat is None:
-                    start_lat = re.search(r"\>([\d]{6,7}[NS]{1})\<", str(search_data[row-count_back]))
+                    start_lat = re.search(
+                        r"\>([\d]{6,7}[NS]{1})\<", str(search_data[row-count_back]))
                     count_back += 1
 
                 # work forward to find the centre point and end lat/lon
@@ -361,16 +472,20 @@ class Webscrape:
                 mid_lat = None
                 mid_lon = None
                 while mid_lat is None:
-                    mid_lat = re.search(r"\>([\d]{6,7}[NS]{1})\<", str(search_data[row+count_forward]))
+                    mid_lat = re.search(
+                        r"\>([\d]{6,7}[NS]{1})\<", str(search_data[row+count_forward]))
                     count_forward += 1
                 while mid_lon is None:
-                    mid_lon = re.search(r"\>([\d]{6,7}[EW]{1})\<", str(search_data[row+count_forward]))
+                    mid_lon = re.search(
+                        r"\>([\d]{6,7}[EW]{1})\<", str(search_data[row+count_forward]))
                     count_forward += 1
                 while end_lat is None:
-                    end_lat = re.search(r"\>([\d]{6,7}[NS]{1})\<", str(search_data[row+count_forward]))
+                    end_lat = re.search(
+                        r"\>([\d]{6,7}[NS]{1})\<", str(search_data[row+count_forward]))
                     count_forward += 1
                 while end_lon is None:
-                    end_lon = re.search(r"\>([\d]{6,7}[EW]{1})\<", str(search_data[row+count_forward]))
+                    end_lon = re.search(
+                        r"\>([\d]{6,7}[EW]{1})\<", str(search_data[row+count_forward]))
                     count_forward += 1
 
                 # convert from dms to dd
@@ -378,7 +493,15 @@ class Webscrape:
                 mid_dd = functions.Geo.dms2dd(mid_lat[0], mid_lon[0])
                 end_dd = functions.Geo.dms2dd(end_lat[0], end_lon[0])
 
-                arc_out = self.generate_semicircle(float(mid_dd[0]), float(mid_dd[1]), float(start_dd[0]), float(start_dd[1]), float(end_dd[0]), float(end_dd[1]), cacw)
+                arc_out = self.generate_semicircle(
+                    float(mid_dd[0]),
+                    float(mid_dd[1]),
+                    float(start_dd[0]),
+                    float(start_dd[1]),
+                    float(end_dd[0]),
+                    float(end_dd[1]),
+                    cacw
+                    )
                 for coord in arc_out:
                     space.append(coord)
 
@@ -409,18 +532,30 @@ class Webscrape:
                     if last_airspace:
                         # for FIRs do this
                         if last_airspace.group(1) == "FIR":
-                            df_fir_out = coord_to_table(last_df_in_title, callsign_out, frequency, output)
+                            df_fir_out = coord_to_table(
+                                last_df_in_title,
+                                callsign_out,
+                                frequency,
+                                output
+                                )
                             df_fir = pd.concat([df_fir, df_fir_out], ignore_index=True)
-                        # for UIRs do this - same extent as FIR
-                        #if last_airspace.group(1) == "UIR":
-                        #    df_uir_out = {'name': last_df_in_title,'callsign': callsign_out,'frequency': str(frequency), 'boundary': str(output), 'upper_fl': '000', 'lower_fl': '000'}
-                        #    df_uir = pd.concat([df_uir, df_uir_out], ignore_index=True)
+                        # for UIRs do nothing - same extent as FIR
                         # for CTAs do this
                         if last_airspace.group(1) == "CTA":
-                            df_cta_out = coord_to_table(last_df_in_title, callsign_out, frequency, output)
+                            df_cta_out = coord_to_table(
+                                last_df_in_title,
+                                callsign_out,
+                                frequency,
+                                output
+                                )
                             df_cta = pd.concat([df_cta, df_cta_out], ignore_index=True)
                         if last_airspace.group(1) == "TMA":
-                            df_tma_out = coord_to_table(last_df_in_title, callsign_out, frequency, output)
+                            df_tma_out = coord_to_table(
+                                last_df_in_title,
+                                callsign_out,
+                                frequency,
+                                output
+                                )
                             df_tma = pd.concat([df_tma, df_tma_out], ignore_index=True)
                     space = []
                     loop_coord = True
@@ -444,32 +579,55 @@ class Webscrape:
             df_locations = pd.DataFrame(columns=df_columns_location)
             df_columns = ['name', 'route']
             df_enr_03 = pd.DataFrame(columns=df_columns)
-            logger.info("Parsing "+ self.country +"-ENR-3."+ section +" data to obtain ATS routes...")
+            logger.info(
+                "Parsing "+ self.country +"-ENR-3."+ section +" data to obtain ATS routes...")
             get_enr_03 = self.get_table_soup(self.country + "-ENR-3."+ section +"-en-GB.html")
             list_tables = get_enr_03.find_all("tbody")
             for row in list_tables:
-                get_airway_name = self.search(r"([A-Z]{1,2}[\d]{1,4})", "TEN_ROUTE_RTE;TXT_DESIG", str(row))
-                get_airway_route = self.search(r"([A-Z]{3,5})", "T(DESIGNATED_POINT|DME|VOR|NDB);CODE_ID", str(row))
-                get_point_lat = self.search(r"(\d{6}\.\d{2}[NS]|(?<!\d\.)\d{6}[NS])", "T(DESIGNATED_POINT|DME|VOR|NDB);GEO_LAT", str(row))
-                get_point_lon = self.search(r"(\d{7}\.\d{2}[EW]|(?<!\d\.)\d{7}[EW])", "T(DESIGNATED_POINT|DME|VOR|NDB);GEO_LONG", str(row))
+                get_airway_name = self.search(
+                    r"([A-Z]{1,2}[\d]{1,4})", "TEN_ROUTE_RTE;TXT_DESIG", str(row))
+                get_airway_route = self.search(
+                    r"([A-Z]{3,5})", "T(DESIGNATED_POINT|DME|VOR|NDB);CODE_ID", str(row))
+                get_point_lat = self.search(
+                    r"(\d{6}\.\d{2}[NS]|(?<!\d\.)\d{6}[NS])",
+                    "T(DESIGNATED_POINT|DME|VOR|NDB);GEO_LAT",
+                    str(row)
+                    )
+                get_point_lon = self.search(
+                    r"(\d{7}\.\d{2}[EW]|(?<!\d\.)\d{7}[EW])",
+                    "T(DESIGNATED_POINT|DME|VOR|NDB);GEO_LONG",
+                    str(row)
+                    )
                 print_route = ''
                 if get_airway_name:
-                    for point, point_lat, point_lon in zip(get_airway_route, get_point_lat, get_point_lon):
+                    zip_airway = zip(get_airway_route, get_point_lat, get_point_lon)
+                    for point, point_lat, point_lon in zip_airway:
                         print_route += str(point[0]) + "/"
-                        dfl_out = pd.DataFrame({'name': str(point[0]), 'type': str(point[1]), 'lat': str(point_lat[0]), 'lon': str(point_lon[0])}, index=[0])
+                        dfl_out = pd.DataFrame({
+                            'name': str(point[0]),
+                            'type': str(point[1]),
+                            'lat': str(point_lat[0]),
+                            'lon': str(point_lon[0])
+                            }, index=[0])
                         df_locations = pd.concat([df_locations, dfl_out], ignore_index=True)
-                    df_out = pd.DataFrame({'name': str(get_airway_name[0]), 'route': str(print_route).rstrip('/')}, index=[0])
+                    df_out = pd.DataFrame({
+                        'name': str(get_airway_name[0]),
+                        'route': str(print_route).rstrip('/')
+                        }, index=[0])
                     df_enr_03 = pd.concat([df_enr_03, df_out], ignore_index=True)
             return [df_enr_03, df_locations]
         else:
-            raise ValueError("This function expects the section variable to be in the range of 1 to 3.")
+            raise ValueError(
+                "This function expects the section variable to be in the range of 1 to 3."
+                )
 
     def parse_enr04_data(self, section:str) -> pd.DataFrame:
         """Parse the data from ENR-4"""
 
         df_columns = ['name', 'type', 'coords', 'freq']
         df_store = pd.DataFrame(columns=df_columns)
-        logger.info("Parsing "+ self.country +"-ENR-4."+ section +" Data (RADIO NAVIGATION AIDS - EN-ROUTE)...")
+        logger.info(
+            "Parsing "+ self.country +"-ENR-4."+ section +" Data (RADIO NAV AIDS - EN-ROUTE)...")
         get_data = self.get_table_soup(self.country + "-ENR-4."+ section +"-en-GB.html")
         list_data = get_data.find_all("tr", class_ = "Table-row-type-3")
         for row in list_data:
@@ -532,7 +690,8 @@ class Webscrape:
 
         df_columns = ['name', 'boundary', 'floor', 'ceiling']
         df_enr_05 = pd.DataFrame(columns=df_columns)
-        logger.info("Parsing "+ self.country +"-ENR-5.1 data for PROHIBITED, RESTRICTED AND DANGER AREAS...")
+        logger.info(
+            "Parsing "+ self.country +"-ENR-5.1 data for PROHIBITED, RESTRICTED AND DANGER AREAS")
         get_enr_05 = self.get_table_soup(self.country + "-ENR-5.1-en-GB.html")
         list_tables = get_enr_05.find_all("tr")
         for row in list_tables:
@@ -540,12 +699,16 @@ class Webscrape:
             get_name = self.search(r"([A-Z\s]*)", "TAIRSPACE;TXT_NAME", str(row))
             get_loc = self.search(r"([\d]{6,7})([N|E|S|W]{1})", "TAIRSPACE_VERTEX;GEO_L", str(row))
             get_upper = self.search(r"([\d]{3,5})", "TAIRSPACE_VOLUME;VAL_DIST_VER_UPPER", str(row))
-            #get_lower = self.search("([\d]{3,5})|(SFC)", "TAIRSPACE_VOLUME;VAL_DIST_VER_LOWER", str(row))
 
             if get_id:
                 for upper in get_upper:
                     up_out = upper
-                df_out = pd.DataFrame({'name': str(get_id[0][0]) + ' ' + str(get_name[2]), 'boundary': self.get_boundary(get_loc), 'floor': 0, 'ceiling': str(up_out)}, index=[0])
+                df_out = pd.DataFrame({
+                    'name': str(get_id[0][0]) + ' ' + str(get_name[2]),
+                    'boundary': self.get_boundary(get_loc),
+                    'floor': 0,
+                    'ceiling': str(up_out)
+                    }, index=[0])
                 df_enr_05 = pd.concat([df_enr_05, df_out], ignore_index=True)
 
         return df_enr_05
@@ -603,17 +766,30 @@ class Webscrape:
 
         lat_split = functions.split(lat) # split the lat into individual digits
         if len(lat_split) > 6:
-            lat_print = f"{lat_ns}{lat_split[0]}{lat_split[1]}.{lat_split[2]}{lat_split[3]}.{lat_split[4]}{lat_split[5]}.{lat_split[7]}{lat_split[8]}"
+            lat_print = (
+                f"{lat_ns}{lat_split[0]}{lat_split[1]}.{lat_split[2]}{lat_split[3]}."
+                f"{lat_split[4]}{lat_split[5]}.{lat_split[7]}{lat_split[8]}"
+                )
         else:
-            lat_print = f"{lat_ns}{lat_split[0]}{lat_split[1]}.{lat_split[2]}{lat_split[3]}.{lat_split[4]}{lat_split[5]}.00"
+            lat_print = (
+                f"{lat_ns}{lat_split[0]}{lat_split[1]}.{lat_split[2]}"
+                f"{lat_split[3]}.{lat_split[4]}{lat_split[5]}.00"
+                )
 
         lon_split = functions.split(lon)
         if len(lon_split) > 7:
-            lon_print = f"{lon_ew}{lon_split[0]}{lon_split[1]}{lon_split[2]}.{lon_split[3]}{lon_split[4]}.{lon_split[5]}{lon_split[6]}.{lon_split[8]}{lon_split[9]}"
+            lon_print = (
+                f"{lon_ew}{lon_split[0]}{lon_split[1]}{lon_split[2]}.{lon_split[3]}"
+                f"{lon_split[4]}.{lon_split[5]}{lon_split[6]}.{lon_split[8]}{lon_split[9]}"
+                )
         else:
-            lon_print = f"{lon_ew}{lon_split[0]}{lon_split[1]}{lon_split[2]}.{lon_split[3]}{lon_split[4]}.{lon_split[5]}{lon_split[6]}.00"
+            lon_print = (
+                f"{lon_ew}{lon_split[0]}{lon_split[1]}{lon_split[2]}.{lon_split[3]}"
+                f"{lon_split[4]}.{lon_split[5]}{lon_split[6]}.00"
+                )
 
-        full_location = f"{lat_print} {lon_print}" # AD-2.2 gives aerodrome location as DDMMSS / DDDMMSS
+        # AD-2.2 gives aerodrome location as DDMMSS / DDDMMSS
+        full_location = f"{lat_print} {lon_print}"
 
         return full_location
 
@@ -625,7 +801,11 @@ class Webscrape:
         draw_line = []
         full_boundary = ''
         for coord in space:
-            coord_format = re.search(r"[N|S][\d]{2,3}\.[\d]{1,2}\.[\d]{1,2}\.[\d]{1,2}\s[E|W][\d]{2,3}\.[\d]{1,2}\.[\d]{1,2}\.[\d]{1,2}", str(coord))
+            coord_format = re.search(
+                (r"[N|S][\d]{2,3}\.[\d]{1,2}\.[\d]{1,2}\.[\d]{1,2}\s[E|W]"
+                 r"[\d]{2,3}\.[\d]{1,2}\.[\d]{1,2}\.[\d]{1,2}"),
+                str(coord)
+                )
             if coord_format is not None:
                 full_boundary += f"{coord}/"
             else:
@@ -640,7 +820,12 @@ class Webscrape:
 
                 # if lat_lon_obj has 4 items
                 if len(lat_lon_obj) == 4:
-                    lat_lon = self.sct_location_builder(lat_lon_obj[0], lat_lon_obj[2], lat_lon_obj[1], lat_lon_obj[3])
+                    lat_lon = self.sct_location_builder(
+                        lat_lon_obj[0],
+                        lat_lon_obj[2],
+                        lat_lon_obj[1],
+                        lat_lon_obj[3]
+                        )
                     full_boundary += f"{lat_lon}/"
                     draw_line.append(lat_lon)
                     lat_lon_obj = []
@@ -649,7 +834,6 @@ class Webscrape:
 
     def generate_semicircle(self, center_x, center_y, start_x, start_y, end_x, end_y, direction):
         """Dreate a semicircle. Direction is 1 for clockwise and 2 for anti-clockwise"""
-        from geographiclib.geodesic import Geodesic
 
         # centre point to start
         geolib_start = Geodesic.WGS84.Inverse(center_x, center_y, start_x, start_y)
