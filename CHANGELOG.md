@@ -1,5 +1,11 @@
 <!--next-version-placeholder-->
 
+## v0.1.2 (2023-07-26)
+### Fix
+* Removed some print statements ([`f4d2f97`](https://github.com/chssn/eaip-parser/commit/f4d2f97dc225e5013bde584355da599e3e8a6e04))
+* Passing full match instead of part thereof ([`1e14456`](https://github.com/chssn/eaip-parser/commit/1e1445618a0e8069f36b24cf5bef0b8a6402aea9))
+* Dms2dd function not accepting DDMMSS input ([`a09916a`](https://github.com/chssn/eaip-parser/commit/a09916a16f9633a4b626ed6dae8eef8c62caf67b))
+
 ## v0.1.1 (2023-07-25)
 ### Fix
 * Incorrect escaping of regex ([`65255e7`](https://github.com/chssn/eaip-parser/commit/65255e7a2202901d8a744ab2f27cb552d459e21f))
