@@ -446,7 +446,7 @@ class Webscrape:
                     (complex_areas["number"] == arc_counter)
                     ]
                 cacw = cacw['direction'].to_string(index=False)
-                print(cacw)
+                logger.debug(cacw)
                 if cacw == "clockwise":
                     cacw = 1
                 elif cacw == "anti-clockwise":
@@ -852,12 +852,12 @@ class Webscrape:
                 arc_coords = Geodesic.WGS84.Direct(center_x, center_y, start_brg, start_dst)
                 arc_out.append(functions.Geo.dd2dms(arc_coords['lat2'], arc_coords['lon2']))
                 start_brg = ((start_brg + 1) % 360)
-                print(start_brg, end_brg_compass)
+                logger.debug(f"{start_brg}, {end_brg_compass}")
         elif direction == 2: # if acw
             while round(start_brg) != round(end_brg_compass):
                 arc_coords = Geodesic.WGS84.Direct(center_x, center_y, start_brg, start_dst)
                 arc_out.append(functions.Geo.dd2dms(arc_coords['lat2'], arc_coords['lon2']))
                 start_brg = ((start_brg - 1) % 360)
-                print(start_brg, end_brg_compass)
+                logger.debug(f"{start_brg}, {end_brg_compass}")
 
         return arc_out
