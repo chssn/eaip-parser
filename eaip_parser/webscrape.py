@@ -458,7 +458,7 @@ class Webscrape:
                 start_lat = None
                 while start_lon is None:
                     start_lon = re.search(
-                        r"\>([\d]{6,7})(E|W)\<", str(search_data[row-count_back]))
+                        r"\>([\d]{6,7}[EW])\<", str(search_data[row-count_back]))
                     count_back += 1
                 while start_lat is None:
                     start_lat = re.search(
@@ -489,9 +489,9 @@ class Webscrape:
                     count_forward += 1
 
                 # convert from dms to dd
-                start_dd = functions.Geo.dms2dd(start_lat[0], start_lon[0])
-                mid_dd = functions.Geo.dms2dd(mid_lat[0], mid_lon[0])
-                end_dd = functions.Geo.dms2dd(end_lat[0], end_lon[0])
+                start_dd = functions.Geo.dms2dd(start_lat[1], start_lon[1])
+                mid_dd = functions.Geo.dms2dd(mid_lat[1], mid_lon[1])
+                end_dd = functions.Geo.dms2dd(end_lat[1], end_lon[1])
 
                 arc_out = self.generate_semicircle(
                     float(mid_dd[0]),
