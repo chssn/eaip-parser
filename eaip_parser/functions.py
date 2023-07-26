@@ -120,13 +120,17 @@ class Geo:
     def dms2dd(lat:str, lon:str) -> list:
         """Converts Degress, Minutes and Seconds to Decimal Degrees"""
 
+        # try and match DDD.MMM.SSS.sss latitude
         lat_split = re.search(r"(\d{1,3})\.(\d{1,3})\.(\d{1,3}\.?\d{0,3})", lat)
         if not lat_split:
+            # try and match DDMMSS latitude
             lat_split = re.search(r"^(\d{2})(\d{2})(\d{2})([NS]{1})$", lat)
         n_or_s = re.search(r"([NS]{1})", lat)
 
+        # try and match DDD.MMM.SSS.sss longitude
         lon_split = re.search(r"(\d{1,3})\.(\d{1,3})\.(\d{1,3}\.?\d{0,3})", lon)
         if not lon_split:
+            # try and match DDDMMSS longitude
             lon_split = re.search(r"^(\d{3})(\d{2})(\d{2})([EW]{1})$", lon)
         e_or_w = re.search(r"([EW]{1})", lon)
 
