@@ -121,8 +121,13 @@ class Geo:
         """Converts Degress, Minutes and Seconds to Decimal Degrees"""
 
         lat_split = re.search(r"(\d{1,3})\.(\d{1,3})\.(\d{1,3}\.?\d{0,3})", lat)
+        if not lat_split:
+            lat_split = re.search(r"^(\d{2})(\d{2})(\d{2})([NS]{1})$", lat)
         n_or_s = re.search(r"([NS]{1})", lat)
+
         lon_split = re.search(r"(\d{1,3})\.(\d{1,3})\.(\d{1,3}\.?\d{0,3})", lon)
+        if not lon_split:
+            lon_split = re.search(r"^(\d{3})(\d{2})(\d{2})([EW]{1})$", lon)
         e_or_w = re.search(r"([EW]{1})", lon)
 
         if lat_split and n_or_s and lon_split and e_or_w:
@@ -145,9 +150,7 @@ class Geo:
         else:
             logger.debug(f"{lat} {lat_split}")
             logger.debug(f"{lon} {lon_split}")
-            logger.debug(n_or_s)
-            logger.debug(e_or_w)
             raise ValueError(
                 "This function accepts lat/lon in the format DDD.MMM.SSS.sss \
-                     prefixed or suffixed by N, S, E or W"
+                     or DDMMSS / DDDMMSS prefixed or suffixed by N, S, E or W"
                 )
