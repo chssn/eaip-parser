@@ -1,5 +1,8 @@
 <!--next-version-placeholder-->
 
+## v0.2.0 (2023-07-27)
+
+
 ## v0.1.2 (2023-07-26)
 ### Fix
 * Removed some print statements ([`f4d2f97`](https://github.com/chssn/eaip-parser/commit/f4d2f97dc225e5013bde584355da599e3e8a6e04))
