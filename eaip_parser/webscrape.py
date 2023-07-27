@@ -187,8 +187,8 @@ class Webscrape:
 
                 # Find the lateral limits
                 limits = re.search(
-                    r"(?:\bUpper\slimit\:\s\b)(\S+(\s\bFT\sALT\b)?)(?:\s\s\bLower\slimit\:\s\b)(\S+(\s\bFT\sALT\b)?)"
-                    r"(?:.*)(?:\bClass\:\s\b)([A-G]{1})", str(row["data"])
+                    r"(?:\bUpper\slimit\:\s\b)(\S+(\s\bFT\sALT\b)?)(?:\s\s\bLower\slimit\:\s\b)"
+                    r"(\S+(\s\bFT\sALT\b)?)(?:.*)(?:\bClass\:\s\b)([A-G]{1})", str(row["data"])
                 )
                 # Cleanup the callsign
                 callsign = re.match(r"([A-Z\s]+)(?:\s\s)", str(row['callsign']))
