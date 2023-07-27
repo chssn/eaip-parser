@@ -23,6 +23,26 @@ def split(word:str) -> list:
         return [char for char in word]
     raise ValueError("This function can only process strings.")
 
+def is_25khz(frequency:str):
+    """
+    Works out if the given frequency is 25KHz
+    Returns FALSE if this is a 25KHz frequency (the logic is much easier that way)
+    If not, rounds to the nearest 25KHz
+    """
+
+    freq_match = re.match(r"^(\d{3})\.(\d{3})$", frequency)
+    if freq_match:
+        if frequency.endswith(("00", "25", "50", "75")):
+            return False
+        else:
+            round_decimal = round(int(freq_match[2]) / 25) * 25
+            if round_decimal == 1000:
+                return f"{str(int(freq_match[1])+1)}.000"
+            return f"{freq_match[1]}.{str(round_decimal).zfill(3)}"
+    else:
+        raise ValueError("Expected frequency in the format nnn.nnn KHz")
+
+
 class Geo:
     """Class containing various geo tools"""
 
@@ -158,3 +178,11 @@ class Geo:
                 "This function accepts lat/lon in the format DDD.MMM.SSS.sss \
                      or DDMMSS / DDDMMSS prefixed or suffixed by N, S, E or W"
                 )
+
+class NoUrlDataFoundError(Exception):
+    """Exception raised when no data has been found at the given url"""
+
+    def __init__(self, url:str, message:str="No data found at the given url") -> None:
+        self.url = url
+        self.message = message
+        super().__init__(f"{self.message} - {self.url}")
