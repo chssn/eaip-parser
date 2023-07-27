@@ -6,14 +6,11 @@ Chris Parkinson (@chssn)
 #!/usr/bin/env python3.8
 
 # Standard Libraries
-from datetime import date
-from unittest.mock import patch, Mock
+import filecmp
 
 # Third Party Libraries
 import pandas as pd
 import pytest
-import requests
-from bs4 import BeautifulSoup
 
 # Local Libraries
 import tests.standard_test_cases as stc
@@ -95,3 +92,17 @@ def test_url_suffix():
     for section in sections:
         wso = webscrapi.url_suffix(section)
         assert wso == str(f"EG-{section}-en-GB.html")
+
+def test_search_enr_2_x():
+    """search_enr_2_x"""
+
+    webscrapi = Webscrape()
+    file_names = ["ENR-2.1_0","ENR-2.1_1", "ENR-2.2_0", "ENR-2.2_1", "ENR-2.2_2"]
+    for proc in file_names:
+        df_out = pd.read_csv(f"tests\\test_data\\{proc}.csv")
+        # The function being tested
+        webscrapi.search_enr_2_x(df_out, proc, no_build=True)
+        filecmp.clear_cache()
+        assert filecmp.cmp(
+            f"tests\\test_data\\{proc}_AIRSPACE_NB.sct",
+            f"eaip_parser\\DataFrames\\{proc}_AIRSPACE.sct", shallow=False) is True
