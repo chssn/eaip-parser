@@ -25,7 +25,13 @@ def parse_table(section:str) -> None:
             tables = self.get_table(section)
             if tables:
                 dataframe = func(self, tables, *args, **kwargs)
-                dataframe.to_csv(f"{functions.work_dir}\\DataFrames\\{section}.csv")
+                if isinstance(dataframe, pd.DataFrame):
+                    dataframe.to_csv(f"{functions.work_dir}\\DataFrames\\{section}.csv")
+                elif isinstance(dataframe, list):
+                    for idx, dfl in enumerate(dataframe):
+                        dfl.to_csv(f"{functions.work_dir}\\DataFrames\\{section}_{idx}.csv")
+                else:
+                    raise TypeError("Not entirely sure what was returned there...")
             else:
                 raise functions.NoUrlDataFoundError(section)
         return wrapper
@@ -63,10 +69,11 @@ class Webscrape:
                 raise ValueError("Expected date in the format YYYY-MM-DD")
         self.date_in = date_in
 
-    def run(self) -> None:
+    def run(self, download_first:bool=True, no_build:bool=False) -> None:
         """Runs the full webscrape"""
 
         self.parse_ad_1_3()
+        self.process_enr_2_1(download_first=download_first, no_build=no_build)
 
     def url_suffix(self, section:str) -> str:
         """Returns a url suffix formatted for the European eAIP standard"""
@@ -140,11 +147,12 @@ class Webscrape:
         return tdf
 
     @parse_table("ENR-2.1")
-    def parse_enr_2(self, tables:list=None) -> pd.DataFrame:
+    def parse_enr_2_1(self, tables:list=None) -> list:
         """Pull data from ENR 2 - AIR TRAFFIC SERVICES AIRSPACE"""
 
         # The data object is table[0] for FIR, UIR, TMA and CTA
         fir_uir_tma_cta = tables[0]
+        ctr = tables[1]
         # Modify header row
         column_headers = [
             "data",
@@ -154,25 +162,20 @@ class Webscrape:
             "remarks",
         ]
         fir_uir_tma_cta.columns = column_headers
+        ctr.columns = column_headers
 
-        return fir_uir_tma_cta
+        return [fir_uir_tma_cta, ctr]
 
-    def process_enr_2(self, download_first:bool=True, no_build:bool=False):
-        """Process ENR 2 data - AIR TRAFFIC SERVICES AIRSPACE"""
-
-        if download_first:
-            self.parse_enr_2()
-
-        # Load the CSV file
-        enr_2 = pd.read_csv(f"{functions.work_dir}\\DataFrames\\ENR-2.1.csv")
+    def search_enr_2_x(self, df_enr_2:pd.DataFrame, no_build:bool=False):
+        """Generic ENR 2 search actions"""
 
         # Start the iterator
         areas = {}
         limits_class = {}
-        for index, row in enr_2.iterrows():
+        for index, row in df_enr_2.iterrows():
             # Check to see if this row contains an area name
             title = re.match(
-                r"^([A-Z\s\-]+(FIR|UIR|TMA|CTA)(\s\d{1,2})?)\s\s\d{6}[NS]{1}\s\d{7}[EW]{1}",
+                r"^([A-Z\s\-]+(FIR|UIR|TMA|CTA|CTR|ATZ)(\s\d{1,2})?)\s\s\d{6}[NS]{1}\s\d{7}[EW]{1}",
                 str(row["data"])
                 )
             if title:
@@ -187,11 +190,12 @@ class Webscrape:
 
                 # Find the lateral limits
                 limits = re.search(
-                    r"(?:\bUpper\slimit\:\s\b)(\S+(\s\bFT\sALT\b)?)(?:\s\s\bLower\slimit\:\s\b)"
-                    r"(\S+(\s\bFT\sALT\b)?)(?:.*)(?:\bClass\:\s\b)([A-G]{1})", str(row["data"])
+                    r"(?:\s+\bUpper\slimit\:\s\b)(\S+(\s\bFT\b\s\bALT\b)?)"
+                    r"(?:\s+\bLower\slimit\:\s\b)(\S+(\s\bFT\b\s\bALT\b)?)"
+                    r"(?:\s+\bClass\b\:\s)([A-G]{1})", str(row["data"])
                 )
                 # Cleanup the callsign
-                callsign = re.match(r"([A-Z\s]+)(?:\s\s)", str(row['callsign']))
+                callsign = re.match(r"([A-Z\s]+)(?:\s+[A-Z]{1}[a-z]+)", str(row['callsign']))
                 # Cleanup the frequency
                 frequency = re.match(r"(\d{3}\.\d{3})", str(row["frequency"]))
                 if frequency:
@@ -200,8 +204,8 @@ class Webscrape:
                         logger.warning(f"{frequency[1]} is not a 25KHz frequency!")
 
                 if limits and coords and callsign and frequency:
-                    limit_text = (f"Class {limits[3]} airspace from {limits[2]} to {limits[1]}"
-                                  f" - {row['unit']} ({callsign[1]}), {frequency[1]}MHz")
+                    limit_text = (f"Class {limits[5]} airspace from {limits[3]} to {limits[1]}"
+                                  f" - {row['unit']} ({callsign[1].rstrip()}), {frequency[1]}MHz")
                     logger.debug(limit_text)
                     limits_class[title[1]] = limit_text
 
@@ -232,3 +236,21 @@ class Webscrape:
             output = f"{output}\n; {idx} - {lco}\n{sct_data}\n"
             last_title = this_title[1]
         print(output)
+
+    def process_enr_2_1(self, download_first:bool=True, no_build:bool=False):
+        """Process ENR 2.1 data - AIR TRAFFIC SERVICES AIRSPACE"""
+
+        if download_first:
+            self.parse_enr_2_1()
+
+        # Load the CSV file
+        df_out = pd.read_csv(f"{functions.work_dir}\\DataFrames\\ENR-2.1_0.csv")
+
+        # Run the searches
+        self.search_enr_2_x(df_out, no_build=no_build)
+
+        # Load the CSV file
+        df_out = pd.read_csv(f"{functions.work_dir}\\DataFrames\\ENR-2.1_1.csv")
+
+        # Run the searches
+        self.search_enr_2_x(df_out, no_build=no_build)
