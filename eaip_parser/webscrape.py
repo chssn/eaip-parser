@@ -73,7 +73,7 @@ class Webscrape:
         """Runs the full webscrape"""
 
         self.parse_ad_1_3()
-        self.process_enr_2_1(download_first=download_first, no_build=no_build)
+        self.process_enr_2(download_first=download_first, no_build=no_build)
 
     def url_suffix(self, section:str) -> str:
         """Returns a url suffix formatted for the European eAIP standard"""
@@ -148,10 +148,11 @@ class Webscrape:
 
     @parse_table("ENR-2.1")
     def parse_enr_2_1(self, tables:list=None) -> list:
-        """Pull data from ENR 2 - AIR TRAFFIC SERVICES AIRSPACE"""
+        """Pull data from ENR 2.1 - AIR TRAFFIC SERVICES AIRSPACE"""
 
-        # The data object is table[0] for FIR, UIR, TMA and CTA
+        # The data object table[0] is for FIR, UIR, TMA and CTA
         fir_uir_tma_cta = tables[0]
+        # The data object table[1] is for CTR
         ctr = tables[1]
         # Modify header row
         column_headers = [
@@ -166,91 +167,147 @@ class Webscrape:
 
         return [fir_uir_tma_cta, ctr]
 
-    def search_enr_2_x(self, df_enr_2:pd.DataFrame, no_build:bool=False):
+    @parse_table("ENR-2.2")
+    def parse_enr_2_2(self, tables:list=None) -> list:
+        """Pull data from ENR 2.2 - OTHER REGULATED AIRSPACE"""
+
+        # The data object table[0] is for ATZ
+        atz = tables[0]
+        # The data object table[27] is for FRA
+        fra = tables[27]
+        # The data object table[28] is for Channel Islands Airspace
+        cia = tables[28]
+
+        # Modify header rows
+        atz_column_headers = [
+            "data",
+            "unit",
+            "callsign",
+            "frequency",
+            "remarks",
+        ]
+        fra_column_headers = [
+            "lateral_limits",
+            "vertical_limits",
+            "remarks"
+        ]
+        cia_column_headers = [
+            "vertical_limits",
+            "lateral_limits",
+            "remarks"
+        ]
+        atz.columns = atz_column_headers
+        fra.columns = fra_column_headers
+        cia.columns = cia_column_headers
+
+        return [atz, fra, cia]
+
+    def search_enr_2_x(self, df_enr_2:pd.DataFrame, file_name:str, no_build:bool=False):
         """Generic ENR 2 search actions"""
 
         # Start the iterator
         areas = {}
         limits_class = {}
         for index, row in df_enr_2.iterrows():
-            # Check to see if this row contains an area name
-            title = re.match(
-                r"^([A-Z\s\-]+(FIR|UIR|TMA|CTA|CTR|ATZ)(\s\d{1,2})?)\s\s\d{6}[NS]{1}\s\d{7}[EW]{1}",
-                str(row["data"])
-                )
-            if title:
-                logger.debug(title[1])
-                # Find the boundary of the area
-                coords = re.search(
-                    r"(?<=\s\s)(\d{6}[NS]{1}\s\d{7}[EW]{1}.*)(?=\b\sUpper\slimit\b)", row["data"]
+            if file_name == "ENR-2.2_1":
+                # Special case for UK Free Route Airspace
+                lat_lim = re.match(
+                    r"^([A-Z0-9\s]+)(\s\d{6}(\.\d{2})?[NS]{1}.*)", row["lateral_limits"]
                     )
-                if coords:
-                    logger.debug(coords[1])
-                    areas[title[1]] = coords[1]
+                logger.debug(str(lat_lim[2]).lstrip())
+                areas[lat_lim[1]] = str(lat_lim[2]).lstrip()
 
-                # Find the lateral limits
-                limits = re.search(
-                    r"(?:\s+\bUpper\slimit\:\s\b)(\S+(\s\bFT\b\s\bALT\b)?)"
-                    r"(?:\s+\bLower\slimit\:\s\b)(\S+(\s\bFT\b\s\bALT\b)?)"
-                    r"(?:\s+\bClass\b\:\s)([A-G]{1})", str(row["data"])
-                )
-                # Cleanup the callsign
-                callsign = re.match(r"([A-Z\s]+)(?:\s+[A-Z]{1}[a-z]+)", str(row['callsign']))
-                # Cleanup the frequency
-                frequency = re.match(r"(\d{3}\.\d{3})", str(row["frequency"]))
-                if frequency:
-                    check_25khz = functions.is_25khz(frequency[1])
-                    if check_25khz:
-                        logger.warning(f"{frequency[1]} is not a 25KHz frequency!")
+                ver_lim = re.findall(r"(FL\s\d{1,3})", row["vertical_limits"])
+                limit_text = (f"UK Free Route Airspace from {ver_lim[0]} to {ver_lim[1]}")
+                logger.debug(limit_text)
+                limits_class[lat_lim[1]] = limit_text
+            elif file_name == "ENR-2.2_2":
+                # Special case for Channel Islands Airspace
+                if re.search(r"\d{6}(\.\d{2})?[NS]{1}", row["lateral_limits"]):
+                    title = f"CHANNEL ISLANDS {index}"
+                    areas[title] = row["lateral_limits"]
+                    logger.debug(row["vertical_limits"])
+                    limits_class[title] = row["vertical_limits"]
+            else:
+                # Check to see if this row contains an area name
+                title = re.match(
+                    r"^([A-Z\s\-]+(\bFIR\b|\bUIR\b|\bTMA\b|\bCTA\b|\bCTR\b|\bATZ\b|\bFRA\b\s"
+                    r"\([A-Z\s]+\))(\s\d{1,2})?)(?:\s\s)",
+                    str(row["data"])
+                    )
+                if title:
+                    logger.debug(title[1])
+                    # Find the boundary of the area
+                    coords = re.search(
+                        r"(?<=\s\s)((\d{6}[NS]{1}\s\d{7}[EW]{1}.*)|(\bA\scircle\b.*))"
+                        r"(?=\s+\bUpper\b)", row["data"]
+                        )
+                    if coords:
+                        logger.debug(coords[1])
+                        areas[title[1]] = coords[1]
 
-                if limits and coords and callsign and frequency:
-                    limit_text = (f"Class {limits[5]} airspace from {limits[3]} to {limits[1]}"
-                                  f" - {row['unit']} ({callsign[1].rstrip()}), {frequency[1]}MHz")
-                    logger.debug(limit_text)
-                    limits_class[title[1]] = limit_text
+                    # Find the lateral limits
+                    limits = re.search(
+                        r"(?:\s+\bUpper\slimit\:\s\b)(\S+(\s\bFT\b\s\b(ALT|AGL)\b)?)"
+                        r"(?:\s+\bLower\slimit\:\s\b)(\S+(\s\bFT\b\s\b(ALT|AGL)\b)?)"
+                        r"(?:\s+\bClass\b\:\s)([A-G]{1})", str(row["data"])
+                    )
+                    # Cleanup the callsign
+                    callsign = re.match(r"^([A-Z\s]+)(?:\s+[A-Z]{1}[a-z]+)", str(row['callsign']))
+                    # Cleanup the frequency
+                    frequency = re.match(r"(\d{3}\.\d{3})", str(row["frequency"]))
+                    if frequency:
+                        check_25khz = functions.is_25khz(frequency[1])
+                        if check_25khz:
+                            logger.warning(f"{frequency[1]} is not a 25KHz frequency!")
+
+                    if limits and coords and callsign and frequency:
+                        limit_text = (f"Class {limits[7]} airspace from {limits[4]} to {limits[1]}"
+                                    f" - {row['unit']} ({callsign[1].rstrip()}), {frequency[1]}MHz")
+                        logger.debug(limit_text)
+                        limits_class[title[1]] = limit_text
 
         output = ""
         last_title = None
-        for idx, loc in areas.items():
-            # Pass text to the builder
-            self.build.text_input(loc)
-            # Request data
-            if no_build:
-                sct_data = "The 'no build' option has been selected...\n"
-            else:
-                sct_data = self.build.request_output()
+        with open(f"{functions.work_dir}\\DataFrames\\{file_name}_AIRSPACE.sct",
+            "w", encoding="utf-8") as file:
+            for idx, loc in areas.items():
+                # Pass text to the builder
+                self.build.text_input(loc)
+                # Request data
+                if no_build:
+                    sct_data = f"The 'no build' option has been selected...\n{loc}"
+                else:
+                    sct_data = self.build.request_output()
 
-            # Add comments into the sct output
-            this_title = re.match(r"^([A-Z\s\/]+)", str(idx))
-            if this_title[1] != last_title:
-                print(output)
-                output = ""
-                output = f"{output}\n; {this_title[1]}"
+                # Add comments into the sct output
+                this_title = re.match(r"^([A-Z\s\/]+)", str(idx))
+                if this_title[1] != last_title:
+                    file.write(output)
+                    output = ""
+                    output = f"{output}\n; {this_title[1]}"
 
-            try:
-                lco = limits_class[idx]
-            except KeyError as error:
-                logger.warning(f"Unable to locate limits and class for {error}")
-                lco = "WARNING! Unable to locate limits and class"
+                try:
+                    lco = limits_class[idx]
+                except KeyError as error:
+                    logger.warning(f"Unable to locate limits and class for {error}")
+                    lco = "WARNING! Unable to locate limits and class"
 
-            output = f"{output}\n; {idx} - {lco}\n{sct_data}\n"
-            last_title = this_title[1]
-        print(output)
+                output = f"{output}\n; {idx} - {lco}\n{sct_data}\n"
+                last_title = this_title[1]
+            file.write(output)
 
-    def process_enr_2_1(self, download_first:bool=True, no_build:bool=False):
-        """Process ENR 2.1 data - AIR TRAFFIC SERVICES AIRSPACE"""
+    def process_enr_2(self, download_first:bool=True, no_build:bool=False) -> None:
+        """Process ENR 2 data"""
 
         if download_first:
             self.parse_enr_2_1()
+            self.parse_enr_2_2()
 
-        # Load the CSV file
-        df_out = pd.read_csv(f"{functions.work_dir}\\DataFrames\\ENR-2.1_0.csv")
+        def run_process(file_name:str) -> None:
+            df_out = pd.read_csv(f"{functions.work_dir}\\DataFrames\\{file_name}.csv")
+            self.search_enr_2_x(df_out, file_name, no_build=no_build)
 
-        # Run the searches
-        self.search_enr_2_x(df_out, no_build=no_build)
-
-        # Load the CSV file
-        df_out = pd.read_csv(f"{functions.work_dir}\\DataFrames\\ENR-2.1_1.csv")
-
-        # Run the searches
-        self.search_enr_2_x(df_out, no_build=no_build)
+        file_names = ["ENR-2.1_0","ENR-2.1_1", "ENR-2.2_0", "ENR-2.2_1", "ENR-2.2_2"]
+        for proc in file_names:
+            run_process(proc)
