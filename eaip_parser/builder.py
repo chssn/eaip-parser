@@ -93,16 +93,19 @@ class KiloJuliett():
 
         logger.debug(self.request_settings)
 
-    def data_input_validator(self, data:str) -> str:
+    @staticmethod
+    def data_input_validator(data:str) -> str:
         """Validates inputed data"""
 
         if re.search(
-            r"^[NS]{1}\d{3}\.\d{2}(\.\d{2})?(\.\d{3})?(\:|\s)[EW]{1}\d{3}\.\d{2}(\.\d{2})?(\.\d{3})?",
+            r"^[NS]{1}\d{3}\.\d{2}(\.\d{2})?(\.\d{3})?(\:|\s)"
+            r"[EW]{1}\d{3}\.\d{2}(\.\d{2})?(\.\d{3})?",
             data
             ):
             return data
         elif re.search(
-            r"^\d{3}\.\d{2}(\.\d{2})?(\.\d{3})?[NS]{1}(\:|\s)\d{3}\.\d{2}(\.\d{2})?(\.\d{3})?[EW]{1}",
+            r"^\d{3}\.\d{2}(\.\d{2})?(\.\d{3})?[NS]{1}(\:|\s)"
+            r"\d{3}\.\d{2}(\.\d{2})?(\.\d{3})?[EW]{1}",
             data
             ):
             return data
@@ -142,29 +145,14 @@ class KiloJuliett():
             return data
         raise ValueError(f"The entry {data} isn't valid")
 
-    def data_input(self, data_in:list) -> None:
-        """The data that needs transforming"""
-
-        data_out = None
-        # Validate the input data
-        for item in data_in:
-            data = self.data_input_validator(item)
-            data_out = f"{data_out}\r\n{data}"
-
-        self.request_settings["input"] = data_out
-        logger.debug(data_out)
-
-    def text_input(self, data_in:str) -> None:
-        """Text data that needs transforming"""
-
-        self.request_settings["input"] = data_in
-        logger.trace(data_in)
-
-    def request_output(self) -> str:
+    def request_output(self, data_in:str) -> str:
         """
         Requests the transformed input data from
         https://kilojuliett.ch/webtools/geo/coordinatesconverter
         """
+
+        self.request_settings["input"] = data_in
+        logger.trace(data_in)
 
         headers = {
             "Sec-Ch-Ua": "",
