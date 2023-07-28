@@ -6,7 +6,9 @@ Chris Parkinson (@chssn)
 #!/usr/bin/env python3.8
 
 # Standard Libraries
+import os
 import re
+import warnings
 
 # Third Party Libraries
 import pandas as pd
@@ -15,8 +17,10 @@ from loguru import logger
 # Local Libraries
 from . import airac, builder, functions, lists
 
-# Define a few decorators
+# This is needed to supress 'xml as html' warnings with bs4
+warnings.filterwarnings("ignore", category=UserWarning)
 
+# Define a few decorators
 def parse_table(section:str, match:str=".+") -> None:
     """A decorator to parse the given section"""
     def decorator_func(func):
@@ -74,6 +78,7 @@ class Webscrape:
 
         self.parse_ad_1_3()
         self.process_enr_2(download_first=download_first, no_build=no_build)
+        self.process_enr_3(download_first=download_first, no_build=no_build)
 
     def url_suffix(self, section:str) -> str:
         """Returns a url suffix formatted for the European eAIP standard"""
@@ -202,6 +207,56 @@ class Webscrape:
 
         return [atz, fra, cia]
 
+    @parse_table("ENR-3.2", "Route Designator")
+    def parse_enr_3_2(self, tables:list=None) -> list:
+        """Pull data from ENR 3.2 - AREA NAVIGATION ROUTES"""
+
+        logger.debug(f"Found {len(tables)} ENR-3.2 tables")
+        table_out = []
+        column_headers = [
+            "route",
+            "name",
+            "coordinates_bearing",
+            "distance",
+            "vertical_limits",
+            "ifr_limits_even",
+            "ifr_limits_odd",
+            "del1",
+            "del2",
+            "del3",
+        ]
+        for table in tables:
+            table.columns = column_headers
+            table.drop(["del1","del2","del3"], axis=1)
+            table_out.append(table)
+
+        return table_out
+
+    @parse_table("ENR-3.3", "Route Designator")
+    def parse_enr_3_3(self, tables:list=None) -> list:
+        """Pull data from ENR 3.3 - OTHER ROUTES"""
+
+        logger.debug(f"Found {len(tables)} ENR-3.3 tables")
+        table_out = []
+        column_headers = [
+            "route",
+            "name",
+            "coordinates_bearing",
+            "distance",
+            "vertical_limits",
+            "ifr_limits_even",
+            "ifr_limits_odd",
+            "del1",
+            "del2",
+            "del3",
+        ]
+        for table in tables:
+            table.columns = column_headers
+            table.drop(["del1","del2","del3"], axis=1)
+            table_out.append(table)
+
+        return table_out
+
     def search_enr_2_x(self, df_enr_2:pd.DataFrame, file_name:str, no_build:bool=False):
         """Generic ENR 2 search actions"""
 
@@ -306,6 +361,164 @@ class Webscrape:
             df_out = pd.read_csv(f"{functions.work_dir}\\DataFrames\\{file_name}.csv")
             self.search_enr_2_x(df_out, file_name, no_build=no_build)
 
-        file_names = ["ENR-2.1_0","ENR-2.1_1", "ENR-2.2_0", "ENR-2.2_1", "ENR-2.2_2"]
+        file_names = ["ENR-2.1_0","ENR-2.1_1","ENR-2.2_0","ENR-2.2_1","ENR-2.2_2"]
         for proc in file_names:
             run_process(proc)
+
+    def search_enr_3_x(self, df_enr_3:pd.DataFrame, no_build:bool=False) -> list:
+        """Generic ENR 3 search actions"""
+
+        def write_to_file(route:str, is_upper:bool):
+            split_route = route.split(" ")
+            route_len = len(split_route)
+            if is_upper:
+                uorl = "UPPER"
+            else:
+                uorl = "LOWER"
+
+            with open(f"{functions.work_dir}\\DataFrames\\ENR-3.2-{uorl}-{split_route[0]}.txt",
+                "w", encoding="utf-8") as file:
+                for idx in range(1, route_len-1, 1):
+                    if (idx + 1) < route_len:
+                        file.write(
+                            f"{split_route[idx]}\t{split_route[idx]}\t{split_route[idx+1]}\t"
+                            f"{split_route[idx+1]}\n")
+
+        route_name = None
+        vor_dme = {}
+        nav_point = {}
+        route_upper = None
+        route_lower = None
+        upper_len = 0
+        lower_len = 0
+        uplo = None
+        point = None
+        for index, row in df_enr_3.iterrows():
+            # Only look at rows which have something in the 3rd column
+            # This will filter out all the short rows which are of little value
+            if pd.notna(row["coordinates_bearing"]):
+                if row["route"] == row["name"] and re.match(r"^[A-Z]{1,2}\d{1,3}$", row["name"]):
+                    # Check to see if this is a route name
+                    logger.debug(row["name"])
+                    route_name = row["name"]
+                    route_upper = f"{row['name']}"
+                    route_lower = f"{row['name']}"
+                elif row["route"] == "∆":
+                    # Check to see if this is a significant point
+                    coordinates = re.match(
+                        r"^(\d{6}(\.\d{2})?[NS])(?:\s+)(\d{7}(\.\d{2})?[EW])$",
+                        row["coordinates_bearing"]
+                        )
+                    if coordinates:
+                        coord_group = f"{coordinates.group(1)} {coordinates.group(3)}"
+                        vordmendb = re.match(
+                            r"^([A-Z\s]+)\s\s([VORDMENB]{3}(\/[VORDMENB]{3})?)"
+                            r"\s+\(\s+([A-Z]{3})\s+\)$",
+                            row["name"]
+                            )
+                        if vordmendb:
+                            # Check to see if this is a VOR/DME/NDB point
+                            vor_dme[vordmendb.group(4)] = coord_group
+                            point = vordmendb.group(4)
+                        else:
+                            # If it isn't VOR/DME/NDB then is must be a nav point
+                            nav_point[row["name"]] = coord_group
+                            point = row['name']
+                        logger.debug(f"{route_name} - {row['name']} - {coord_group}")
+                    else:
+                        raise ValueError(f"No coordinates match for {row['coordinates_bearing']}")
+                elif row["route"] == row["name"] and re.match(r"^\(.*\)$", row["name"]):
+                    vert_limits = re.findall(r"FL\s(\d{2,3})", row["vertical_limits"])
+                    # An airway is classed as upper if it operates >=FL250
+                    if len(vert_limits) in [1,2]:
+                        upper_fl = vert_limits[0]
+                        if len(vert_limits) == 2:
+                            lower_fl = vert_limits[1]
+                        else:
+                            lower_fl = 0
+                        if int(upper_fl) >= 250 and int(lower_fl) >= 250:
+                            # Upper airway only
+                            route_upper = f"{route_upper} {point}"
+                            uplo = 0
+                        elif int(upper_fl) < 250 and int(lower_fl) < 250:
+                            # Lower airway only
+                            route_lower = f"{route_lower} {point}"
+                            uplo = 1
+                        else:
+                            # Must be both upper and lower
+                            route_upper = f"{route_upper} {point}"
+                            route_lower = f"{route_lower} {point}"
+                            uplo = 2
+                    else:
+                        ve_text = f"Can't find upper and lower levels from {row['vertical_limits']}"
+                        raise ValueError(ve_text)
+
+        # Assign the final point to the correct route
+        upper_split = route_upper.split(" ")
+        lower_split = route_lower.split(" ")
+        upper_len = len(upper_split)
+        lower_len = len(lower_split)
+
+        if (upper_len > 1 and
+            lower_len > upper_len and
+            (upper_len + 1) <= lower_len and
+            lower_split[-1] not in route_upper
+            ):
+            route_upper = f"{route_upper} {lower_split[-1]}"
+        elif uplo == 0:
+            route_upper = f"{route_upper} {point}"
+
+        if (lower_len > 1 and
+            upper_len > lower_len and
+            (lower_len + 1) <= upper_len and
+            upper_split[-1] not in route_lower
+            ):
+            route_lower = f"{route_lower} {upper_split[-1]}"
+        elif uplo == 1:
+            route_lower = f"{route_lower} {point}"
+
+        if uplo == 2:
+            route_upper = f"{route_upper} {point}"
+            route_lower = f"{route_lower} {point}"
+
+        if uplo > 2 or uplo < 0:
+            raise ValueError(f"Unable to set last point - {point}")
+        
+        # Write the output to a file
+        if upper_len > 1:
+            write_to_file(route_upper, True)
+        if lower_len > 1:
+            write_to_file(route_lower, False)
+
+        return [vor_dme, nav_point]
+
+    def process_enr_3(self, download_first:bool=True, no_build:bool=False) -> None:
+        """Process ENR 2 data"""
+
+        if download_first:
+            self.parse_enr_3_2()
+            self.parse_enr_3_3()
+
+        def run_process(file_name:str) -> list:
+            df_out = pd.read_csv(f"{functions.work_dir}\\DataFrames\\{file_name}")
+            search_results = self.search_enr_3_x(df_out, no_build=no_build)
+            return search_results
+
+        vor_dme = {}
+        nav_aid = {}
+        file_names = self.generate_file_names("ENR-3")
+        for proc in file_names:
+            rpp = run_process(proc)
+            vor_dme.update(rpp[0])
+            nav_aid.update(rpp[1])
+
+        print(vor_dme)
+        print(nav_aid)
+
+    @staticmethod
+    def generate_file_names(file_start:str) -> list:
+        """Generates an incremental list of filenames"""
+
+        path = f"{functions.work_dir}\\DataFrames\\"
+        enr_files = [filename for filename in os.listdir(path) if filename.startswith(file_start)]
+        return enr_files
