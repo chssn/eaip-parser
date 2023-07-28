@@ -365,7 +365,7 @@ class Webscrape:
         for proc in file_names:
             run_process(proc)
 
-    def search_enr_3_x(self, df_enr_3:pd.DataFrame, no_build:bool=False) -> list:
+    def search_enr_3_x(self, df_enr_3:pd.DataFrame) -> list:
         """Generic ENR 3 search actions"""
 
         def write_to_file(route:str, is_upper:bool):
@@ -501,8 +501,23 @@ class Webscrape:
 
         def run_process(file_name:str) -> list:
             df_out = pd.read_csv(f"{functions.work_dir}\\DataFrames\\{file_name}")
-            search_results = self.search_enr_3_x(df_out, no_build=no_build)
+            search_results = self.search_enr_3_x(df_out)
             return search_results
+
+        def convert_coords_dump_df(coord_in:dict, name:str) -> str:
+            for coord in coord_in.items():
+                # The coordinates need passing twice to work with the builder
+                # This is a 3rd party api limitation
+                xform = self.build.request_output(f"{coord[1]} {coord[1]}")
+                split_xform = xform.split(" ")
+                # Then we only need to return the first 2/4 results as they're duplicated
+                # This is an artifact from the api limitation already mentioned
+                coord_in[coord[0]] = f"{split_xform[0]} {split_xform[1]}"
+                logger.debug(f"{coord[0]} - {coord[1]} to {split_xform[0]} {split_xform[1]}")
+            # Save as a csv df
+            df_cc = pd.DataFrame.from_dict(coord_in, orient="index", columns=["lat/lon"])
+            df_cc = df_cc.reset_index()
+            df_cc.to_csv(f"{functions.work_dir}\\DataFrames\\{name}.csv")
 
         vor_dme = {}
         nav_aid = {}
@@ -512,13 +527,18 @@ class Webscrape:
             vor_dme.update(rpp[0])
             nav_aid.update(rpp[1])
 
-        print(vor_dme)
-        print(nav_aid)
+        if no_build:
+            logger.warning("The 'no build' option has been set!")
+            print(vor_dme)
+            print(nav_aid)
+        else:
+            convert_coords_dump_df(vor_dme, "VOR_DME")
+            convert_coords_dump_df(nav_aid, "NAV_AID")
 
     @staticmethod
-    def generate_file_names(file_start:str) -> list:
+    def generate_file_names(file_start:str, file_type:str="csv") -> list:
         """Generates an incremental list of filenames"""
 
         path = f"{functions.work_dir}\\DataFrames\\"
-        enr_files = [filename for filename in os.listdir(path) if filename.startswith(file_start)]
+        enr_files = [filename for filename in os.listdir(path) if filename.startswith(file_start) and filename.endswith(file_type)]
         return enr_files
