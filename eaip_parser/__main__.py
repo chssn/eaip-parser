@@ -8,9 +8,18 @@ Chris Parkinson (@chssn)
 # Standard Libraries
 
 # Third Party Libraries
+from loguru import logger
 
 # Local Libraries
 from . import webscrape
 
-run_it = webscrape.Webscrape()
-run_it.run()
+@logger.catch
+def main() -> None:
+    """Main program thread"""
+
+    # Run the webscraper
+    scrape = webscrape.Webscrape()
+    scrape.run()
+
+if __name__ == "__main__":
+    main()
