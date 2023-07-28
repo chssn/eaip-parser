@@ -17,12 +17,12 @@ from . import airac, builder, functions, lists
 
 # Define a few decorators
 
-def parse_table(section:str) -> None:
+def parse_table(section:str, match:str=".+") -> None:
     """A decorator to parse the given section"""
     def decorator_func(func):
         def wrapper(self, *args, **kwargs):
             logger.info(f"Parsing {section} data...")
-            tables = self.get_table(section)
+            tables = self.get_table(section, match)
             if tables:
                 dataframe = func(self, tables, *args, **kwargs)
                 if isinstance(dataframe, pd.DataFrame):
@@ -31,7 +31,7 @@ def parse_table(section:str) -> None:
                     for idx, dfl in enumerate(dataframe):
                         dfl.to_csv(f"{functions.work_dir}\\DataFrames\\{section}_{idx}.csv")
                 else:
-                    raise TypeError("Not entirely sure what was returned there...")
+                    raise TypeError("No pandas dataframe or list was found")
             else:
                 raise functions.NoUrlDataFoundError(section)
         return wrapper
@@ -79,7 +79,7 @@ class Webscrape:
         """Returns a url suffix formatted for the European eAIP standard"""
         return str(f"{self.country}-{section}-{self.language}.html")
 
-    def get_table(self, section:str) -> list:
+    def get_table(self, section:str, match:str=".+") -> list:
         """Gets a table from the given url as a list of dataframes"""
 
         # Combine the airac cycle url with the page being scraped
@@ -88,7 +88,7 @@ class Webscrape:
 
         try:
             # Read the full address into a list of dataframes
-            tables = pd.read_html(address, flavor="bs4")
+            tables = pd.read_html(address, flavor="bs4", match=match)
 
             # Debug functions
             if self.debug:
@@ -218,7 +218,7 @@ class Webscrape:
                 areas[lat_lim[1]] = str(lat_lim[2]).lstrip()
 
                 ver_lim = re.findall(r"(FL\s\d{1,3})", row["vertical_limits"])
-                limit_text = (f"UK Free Route Airspace from {ver_lim[0]} to {ver_lim[1]}")
+                limit_text = f"UK Free Route Airspace from {ver_lim[0]} to {ver_lim[1]}"
                 logger.debug(limit_text)
                 limits_class[lat_lim[1]] = limit_text
             elif file_name == "ENR-2.2_2":
@@ -272,13 +272,11 @@ class Webscrape:
         with open(f"{functions.work_dir}\\DataFrames\\{file_name}_AIRSPACE.sct",
             "w", encoding="utf-8") as file:
             for idx, loc in areas.items():
-                # Pass text to the builder
-                self.build.text_input(loc)
                 # Request data
                 if no_build:
                     sct_data = f"The 'no build' option has been selected...\n{loc}"
                 else:
-                    sct_data = self.build.request_output()
+                    sct_data = self.build.request_output(loc)
 
                 # Add comments into the sct output
                 this_title = re.match(r"^([A-Z\s\/]+)", str(idx))
