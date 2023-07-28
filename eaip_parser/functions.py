@@ -9,13 +9,16 @@ Chris Parkinson (@chssn)
 import math
 import os
 import re
+import subprocess
 
 # Third Party Libraries
+import git
 from loguru import logger
 
 # Local Libraries
 
 work_dir = os.path.dirname(__file__)
+logger.debug(f"Working directory is {work_dir}")
 
 def split(word:str) -> list:
     """Splits a word and returns as a list"""
@@ -41,6 +44,106 @@ def is_25khz(frequency:str):
             return f"{freq_match[1]}.{str(round_decimal).zfill(3)}"
     else:
         raise ValueError("Expected frequency in the format nnn.nnn KHz")
+
+
+class GitActions:
+    """
+    Performs git actions on the defined repo
+    """
+
+    def __init__(self, git_folder:str="UK-Sector-File", branch:str="main") -> None:
+        # Currently hardcoded for VATSIM UK
+        self.repo_url = "https://github.com/VATSIM-UK/UK-Sector-File.git"
+
+        # Set some git vars
+        self.branch = branch
+        self.git_folder = git_folder
+        self.git_path = f"{work_dir}\\{git_folder}"
+
+    @staticmethod
+    def is_git_installed() -> bool:
+        """Checks to see if the git package is installed"""
+        try:
+            # Execute the git command to check if it is recognized
+            version = subprocess.check_output(['git', '--version'])
+            logger.debug(f"Git is installed - {str(version.decode()).strip()}")
+            return True
+        except (FileNotFoundError, subprocess.CalledProcessError):
+            return False
+
+    @staticmethod
+    def install_git() -> bool:
+        """Trys to install the git package"""
+        logger.info("Lauching PowerShell to run the following command:"
+                    "winget install --id Git.Git -e --source winget")
+        logger.info("You can find out more about winget here - "
+                    "https://learn.microsoft.com/en-us/windows/package-manager/winget/")
+
+        # Launch the shell
+        process = subprocess.Popen([
+            "powershell.exe", "-Command", "winget install --id Git.Git -e --source winget"])
+
+        # Wait for the process to complete and get the exit status
+        process.communicate()
+        exit_status = process.returncode
+
+        # Continue with the remaining code or perform actions based on the exit status
+        if exit_status == 0:
+            logger.success("PowerShell command executed successfully.")
+            return True
+        else:
+            logger.error("PowerShell command failed with exit status:", exit_status)
+            return False
+
+    def check_requirements(self) -> bool:
+        """Checks to see if the basic requirements are satisfied"""
+
+        # Test if Git is installed
+        if not self.is_git_installed():
+            logger.error("Git is not installed")
+            print("For this tool to work properly, the 'git' package is required.")
+            print("This tool can automatically download the 'git' package from:")
+            print("\thttps://git-scm.com/download/win")
+            consent = input("Are you happy for this tool to install 'git'? [Y|n] ")
+            if consent.upper() == "Y" or consent is None:
+                logger.success("User has constented to the 'git' package being installed")
+                if self.install_git():
+                    logger.success("Git has been installed")
+                    return True
+            logger.error("User has not consented to the 'git' package being installed")
+            return False
+        return True
+
+    def clone(self) -> bool:
+        """
+        Perform the clone operation. Returns TRUE if the folder already exists and FALSE if not
+        """
+
+        folder = f"{self.git_path}"
+        if os.path.exists(folder):
+            logger.success(f"The repo has already been cloned to {folder}")
+            return True
+        else:
+            logger.info(f"Cloning into {self.repo_url}")
+            git.Repo.clone_from(self.repo_url, folder, branch=self.branch)
+            logger.success("The repo has been successfully cloned")
+        return False
+
+    def pull(self) -> bool:
+        """Performs a 'git pull' operation"""
+        if os.path.exists(self.git_path):
+            logger.info(f"Pulling changes from {self.repo_url} to {self.git_path}")
+
+            # Open the repository
+            repo = git.Repo(self.git_path)
+
+            if str(repo.active_branch) == str(self.branch):
+                # Pull the latest commit
+                logger.debug(f"Pull {self.repo_url}")
+                repo.git.pull()
+        else:
+            raise FileNotFoundError(self.git_path)
+        return False
 
 
 class Geo:
@@ -178,6 +281,7 @@ class Geo:
                 "This function accepts lat/lon in the format DDD.MMM.SSS.sss \
                      or DDMMSS / DDDMMSS prefixed or suffixed by N, S, E or W"
                 )
+
 
 class NoUrlDataFoundError(Exception):
     """Exception raised when no data has been found at the given url"""
