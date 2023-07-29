@@ -11,16 +11,12 @@ import filecmp
 # Third Party Libraries
 import pandas as pd
 import pytest
+from unittest.mock import MagicMock, patch
 
 # Local Libraries
 import tests.standard_test_cases as stc
-from eaip_parser import lists
+from eaip_parser import functions, lists
 from eaip_parser.webscrape import Webscrape
-
-@pytest.fixture
-def webscrape_object(**kwargs):
-    """Define a fixture to create an instance of YourClassName for testing"""
-    return Webscrape(**kwargs)
 
 def test_init_country():
     """__init__"""
@@ -71,15 +67,36 @@ def test_init_date_in():
         assert webscapi.date_in == date
 
     bad_dates = [
-        "2010-00-00",
-        "2010-13-39",
-        "2010-02-30",
-        "A",
-        "2010-2-8"
+        ("2010-00-00", "month must be in 1..12"),
+        ("2010-13-39", "month must be in 1..12"),
+        ("2010-02-30", "day is out of range for month"),
+        ("A", "Invalid isoformat string: 'A'"),
+        ("2010-2-8", "Invalid isoformat string: '2010-2-8'")
     ]
-    for date in bad_dates:
-        with pytest.raises(ValueError):
+    for date, error in bad_dates:
+        with pytest.raises(ValueError, match=error):
             webscapi = Webscrape(date_in=date)
+
+class TestRunMethod:
+    """Webscrape.run"""
+    @patch.object(Webscrape, "parse_ad_1_3")
+    @patch.object(Webscrape, "process_enr_2")
+    @patch.object(Webscrape, "process_enr_3")
+    def test_run_method(self, mock_process_enr_3, mock_process_enr_2, mock_parse_ad_1_3):
+        # Create an instance of YourClass
+        your_class_instance = Webscrape()
+
+        # Call the run() method
+        your_class_instance.run(download_first=True, no_build=False)
+
+        # Check if parse_ad_1_3() was called
+        assert mock_parse_ad_1_3.called_once()
+
+        # Check if process_enr_2() was called with the correct arguments
+        mock_process_enr_2.assert_called_once_with(download_first=True, no_build=False)
+
+        # Check if process_enr_3() was called with the correct arguments
+        mock_process_enr_3.assert_called_once_with(download_first=True, no_build=False)
 
 def test_url_suffix():
     """url_suffix"""
@@ -124,3 +141,37 @@ def test_search_enr_3_x():
         assert filecmp.cmp(
             f"tests\\test_data\\{file_out}",
             f"eaip_parser\\DataFrames\\{file_out}", shallow=False) is True
+
+
+class TestGetTableMethod:
+    def test_get_table_with_tables(self):
+        # Create an instance of YourClass
+        your_class_instance = Webscrape()
+
+        # Mock the pd.read_html method to return a list of DataFrames
+        mock_tables = [pd.DataFrame({"Column1": [1, 2], "Column2": [3, 4]}), pd.DataFrame({"Column3": [5, 6], "Column4": [7, 8]})]
+        with patch("pandas.read_html", return_value=mock_tables) as mock_read_html:
+            # Call the get_table() method
+            result = your_class_instance.get_table(section="TestSection", match=".+")
+
+            # Check if pd.read_html was called with the correct arguments
+            mock_read_html.assert_called_once_with(your_class_instance.cycle_url + your_class_instance.url_suffix(section="TestSection"), flavor="bs4", match=".+")
+
+            # Check if the method returned the expected result
+            assert result == mock_tables
+
+    def test_get_table_no_tables(self):
+        # Create an instance of YourClass
+        your_class_instance = Webscrape()
+
+        # Mock the pd.read_html method to return an empty list
+        with patch("pandas.read_html", return_value=[]) as mock_read_html:
+            # Call the get_table() method and expect an exception to be raised
+            with pytest.raises(functions.NoUrlDataFoundError) as exc_info:
+                your_class_instance.get_table(section="TestSection", match=".+")
+
+            # Check if pd.read_html was called with the correct arguments
+            mock_read_html.assert_called_once_with(your_class_instance.cycle_url + your_class_instance.url_suffix(section="TestSection"), flavor="bs4", match=".+")
+
+            # Check if the correct exception was raised
+            assert str(exc_info.value) == "No data found at the given url - " + your_class_instance.cycle_url + your_class_instance.url_suffix(section="TestSection")
