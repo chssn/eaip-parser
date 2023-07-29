@@ -106,3 +106,21 @@ def test_search_enr_2_x():
         assert filecmp.cmp(
             f"tests\\test_data\\{proc}_AIRSPACE_NB.sct",
             f"eaip_parser\\DataFrames\\{proc}_AIRSPACE.sct", shallow=False) is True
+
+def test_search_enr_3_x():
+    """search_enr_3_x"""
+
+    webscrapi = Webscrape()
+    file_names = [
+        ("ENR-3.2_151.csv", "ENR-3.2-LOWER-Q63.txt"),
+        ("ENR-3.2_67.csv", "ENR-3.2-LOWER-N16.txt"),
+        ("ENR-3.2_88.csv", "ENR-3.2-LOWER-N90.txt")
+        ]
+    for file_in, file_out in file_names:
+        df_out = pd.read_csv(f"tests\\test_data\\{file_in}")
+        # The function being tested
+        webscrapi.search_enr_3_x(df_out)
+        filecmp.clear_cache()
+        assert filecmp.cmp(
+            f"tests\\test_data\\{file_out}",
+            f"eaip_parser\\DataFrames\\{file_out}", shallow=False) is True
