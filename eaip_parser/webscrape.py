@@ -380,9 +380,17 @@ class Webscrape:
                 "w", encoding="utf-8") as file:
                 for idx in range(1, route_len-1, 1):
                     if (idx + 1) < route_len:
+                        # If the point is only 3 characters, it needs padding with 2 extra spaces
+                        if len(split_route[idx]) == 3:
+                            point = f"{split_route[idx]}  "
+                        else:
+                            point = split_route[idx]
+                        if len(split_route[idx+1]) == 3:
+                            point_plus = f"{split_route[idx+1]}  "
+                        else:
+                            point_plus = split_route[idx+1]
                         file.write(
-                            f"{split_route[idx]}\t{split_route[idx]}\t{split_route[idx+1]}\t"
-                            f"{split_route[idx+1]}\n")
+                            f"{point} {point} {point_plus} {point_plus.rstrip()}\n")
 
         route_name = None
         vor_dme = {}
