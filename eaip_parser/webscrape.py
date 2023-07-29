@@ -108,19 +108,6 @@ class Webscrape:
         except ValueError as error:
             logger.warning(f"{error} for {address}")
 
-    def parse_all_tables(self) -> None:
-        """Parses a list of tables, saving the output to the DataFrames folder"""
-
-        # Store the current value of self.debug before forcing to True
-        debug_flag = self.debug
-        self.debug = True
-
-        for section in lists.eaip_sections:
-            self.get_table(section)
-
-        # Reset the value of self.debug
-        self.debug = debug_flag
-
     @parse_table("AD-1.3")
     def parse_ad_1_3(self, tables:list=None) -> pd.DataFrame:
         """Process data from AD 1.3 - INDEX TO AERODROMES AND HELIPORTS"""
