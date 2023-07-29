@@ -73,6 +73,9 @@ class Webscrape:
                 raise ValueError("Expected date in the format YYYY-MM-DD")
         self.date_in = date_in
 
+        # Define at which FL an airway should be marked as 'uppper'
+        self.airway_split = 245
+
     def run(self, download_first:bool=True, no_build:bool=False) -> None:
         """Runs the full webscrape"""
 
@@ -411,7 +414,7 @@ class Webscrape:
                     route_name = row["name"]
                     route_upper = f"{row['name']}"
                     route_lower = f"{row['name']}"
-                elif row["route"] == "∆":
+                elif row["route"] == "∆" or (not pd.notna(row["route"]) and row["route"]):
                     # Check to see if this is a significant point
                     coordinates = re.match(
                         r"^(\d{6}(\.\d{2})?[NS])(?:\s+)(\d{7}(\.\d{2})?[EW])$",
@@ -444,11 +447,13 @@ class Webscrape:
                             lower_fl = vert_limits[1]
                         else:
                             lower_fl = 0
-                        if int(upper_fl) >= 250 and int(lower_fl) >= 250:
+                        if (int(upper_fl) >= self.airway_split and
+                            int(lower_fl) >= self.airway_split):
                             # Upper airway only
                             route_upper = f"{route_upper} {point}"
                             uplo = 0
-                        elif int(upper_fl) < 250 and int(lower_fl) < 250:
+                        elif (int(upper_fl) < self.airway_split and
+                              int(lower_fl) < self.airway_split):
                             # Lower airway only
                             route_lower = f"{route_lower} {point}"
                             uplo = 1
