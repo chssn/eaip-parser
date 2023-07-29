@@ -410,7 +410,7 @@ class Webscrape:
             if pd.notna(row["coordinates_bearing"]):
                 if row["route"] == row["name"] and re.match(r"^[A-Z]{1,2}\d{1,3}$", row["name"]):
                     # Check to see if this is a route name
-                    logger.debug(row["name"])
+                    logger.debug(f'{row["name"]} {index}')
                     route_name = row["name"]
                     route_upper = f"{row['name']}"
                     route_lower = f"{row['name']}"
