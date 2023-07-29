@@ -460,6 +460,10 @@ class Webscrape:
                     else:
                         ve_text = f"Can't find upper and lower levels from {row['vertical_limits']}"
                         raise ValueError(ve_text)
+            elif row["route"] == row["name"] and not pd.notna(row["coordinates_bearing"]):
+                # Deal with entries that don't have any limits defined...
+                route_upper = f"{route_upper} {point}"
+                route_lower = f"{route_lower} {point}"
 
         # Assign the final point to the correct route
         upper_split = route_upper.split(" ")
