@@ -67,10 +67,6 @@ class Webscrape:
         # Use default settings
         self.build.settings()
 
-        # Validate the entry for date_in
-        if date_in != 0:
-            if not re.match(r"^20\d{2}\-[0-1]{1}\d{1}\-[0-3]{1}\d{1}$", date_in):
-                raise ValueError("Expected date in the format YYYY-MM-DD")
         self.date_in = date_in
 
         # Define at which FL an airway should be marked as 'uppper'
