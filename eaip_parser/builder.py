@@ -127,8 +127,6 @@ class KiloJuliett():
             return data
         elif re.search(r"^\d{2}[NS]{1}\d{3}[EW]{1}", data):
             return data
-        elif re.search(r"^\d{2}[NS]{1}\d{3}[EW]{1}", data):
-            return data
         elif re.search(
             r"^\d{2}°\d{2}'\d{2}\"[NS]{1}\s\,\s\d{3}°\d{2}'\d{2}\"[EW]{1}",
             data
