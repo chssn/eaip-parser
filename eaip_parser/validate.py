@@ -17,7 +17,7 @@ from loguru import logger
 from . import functions
 
 
-class UkSectorFile():
+class UkSectorFile:
     """Carry out validation of the UK Sector File"""
 
     def __init__(self) -> None:
