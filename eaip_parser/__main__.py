@@ -11,15 +11,22 @@ Chris Parkinson (@chssn)
 from loguru import logger
 
 # Local Libraries
-from . import webscrape
+import eaip_parser
+from . import validate, webscrape
 
 @logger.catch
 def main() -> None:
     """Main program thread"""
 
+    logger.info(f"eAIP Parser and Sector File Validator - v{eaip_parser.__version__}")
+
     # Run the webscraper
     scrape = webscrape.Webscrape()
     scrape.run()
+
+    # Run the validator
+    validator = validate.UkSectorFile()
+    validator.airways_rnav()
 
 if __name__ == "__main__":
     main()
