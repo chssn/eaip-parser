@@ -500,7 +500,7 @@ class Webscrape:
 
         if uplo > 2 or uplo < 0:
             raise ValueError(f"Unable to set last point - {point}")
-        
+
         # Write the output to a file
         if upper_len > 1:
             write_to_file(route_upper, True)
@@ -557,5 +557,6 @@ class Webscrape:
         """Generates an incremental list of filenames"""
 
         path = f"{functions.work_dir}\\DataFrames\\"
-        enr_files = [filename for filename in os.listdir(path) if filename.startswith(file_start) and filename.endswith(file_type)]
+        enr_files = ([file for file in os.listdir(path) if
+                      file.startswith(file_start) and file.endswith(file_type)])
         return enr_files
