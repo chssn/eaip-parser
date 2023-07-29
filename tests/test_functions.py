@@ -6,13 +6,16 @@ Chris Parkinson (@chssn)
 #!/usr/bin/env python3.8
 
 # Standard Libraries
+import os
+import subprocess
 
 # Third Party Libraries
+import git
 import pytest
 
 # Local Libraries
 import eaip_parser.functions as functions
-from eaip_parser.functions import Geo
+from eaip_parser.functions import Geo, GitActions, NoUrlDataFoundError
 
 def test_is_25khz():
     """is_25khz"""
@@ -159,3 +162,161 @@ def test_dms2dd():
         Geo.dms2dd("A", 1.7)
     with pytest.raises(ValueError):
         Geo.dms2dd("A", "B")
+
+def test_git_init():
+    """GitActions()"""
+    # Test default settings
+    test_git = GitActions()
+    assert test_git.repo_url == "https://github.com/VATSIM-UK/UK-Sector-File.git"
+    assert test_git.branch == "main"
+    assert test_git.git_folder == "UK-Sector-File"
+    assert test_git.git_path == f"{functions.work_dir}\\UK-Sector-File"
+
+    # Test modified settings
+    test_git = GitActions(git_folder="TEST_A", branch="TEST_B")
+    assert test_git.repo_url == "https://github.com/VATSIM-UK/UK-Sector-File.git"
+    assert test_git.branch == "TEST_B"
+    assert test_git.git_folder == "TEST_A"
+    assert test_git.git_path == f"{functions.work_dir}\\TEST_A"
+
+def test_git_installed(mocker):
+    """is_git_installed true"""
+    # Mock subprocess.check_output to simulate Git being installed
+    mocker.patch("subprocess.check_output", return_value=b"git version 2.32.0")
+
+    # Call the is_git_installed function
+    result = GitActions.is_git_installed()
+
+    assert result is True
+
+def test_git_not_installed(mocker):
+    """is_git_installed false"""
+    # Mock subprocess.check_output to simulate Git being installed
+    mocker.patch("subprocess.check_output", side_effect=FileNotFoundError("git"))
+
+    # Call the is_git_installed function
+    result = GitActions.is_git_installed()
+
+    assert result is False
+
+@pytest.mark.parametrize("exit_code, expected_result", [(0, True), (1, False)])
+def test_install_git(mocker, exit_code, expected_result):
+    """install_git"""
+    # Mock subprocess.Popen to simulate the PowerShell command
+    mocker.patch("subprocess.Popen")
+    process_instance = subprocess.Popen.return_value
+    process_instance.returncode = exit_code
+
+    # Call the install_git function
+    result = GitActions.install_git()
+
+    assert result == expected_result
+
+
+class TestCheckRequirements:
+    """check_requirements"""
+    def test_requirements_satisfied(self, monkeypatch):
+        """Mock is_git_installed to return True"""
+        monkeypatch.setattr(GitActions, "is_git_installed", lambda self: True)
+
+        your_class_instance = GitActions()
+
+        result = your_class_instance.check_requirements()
+
+        assert result is True
+
+    def test_requirements_not_satisfied_with_install(self, monkeypatch):
+        """Mock is_git_installed to return False and install_git to return True"""
+        monkeypatch.setattr(GitActions, "is_git_installed", lambda self: False)
+        monkeypatch.setattr(GitActions, "install_git", lambda self: True)
+
+        your_class_instance = GitActions()
+
+        # Mock user input consent to "Y"
+        monkeypatch.setattr("builtins.input", lambda _: "Y")
+
+        result = your_class_instance.check_requirements()
+
+        assert result is True
+
+    def test_requirements_not_satisfied_without_install(self, monkeypatch):
+        """Mock is_git_installed to return False and install_git to return False"""
+        monkeypatch.setattr(GitActions, "is_git_installed", lambda self: False)
+        monkeypatch.setattr(GitActions, "install_git", lambda self: False)
+
+        your_class_instance = GitActions()
+
+        # Mock user input consent to "N"
+        monkeypatch.setattr("builtins.input", lambda _: "N")
+
+        result = your_class_instance.check_requirements()
+
+        assert result is False
+
+
+class TestClone:
+    """clone"""
+    def test_repo_already_cloned(self, monkeypatch):
+        """Mock os.path.exists to return True"""
+        monkeypatch.setattr(os.path, "exists", lambda _: True)
+
+        your_class_instance = GitActions()
+
+        result = your_class_instance.clone()
+
+        assert result is True
+
+    def test_repo_not_cloned(self, monkeypatch):
+        """Mock os.path.exists to return False"""
+        monkeypatch.setattr(os.path, "exists", lambda _: False)
+
+        # Mock git.Repo.clone_from to do nothing
+        # (since we don't want to perform actual cloning in tests)
+        monkeypatch.setattr(git.Repo, "clone_from", lambda *args, **kwargs: None)
+
+        your_class_instance = GitActions()
+
+        result = your_class_instance.clone()
+
+        assert result is False
+
+
+class TestPull:
+    """pull"""
+    def test_pull_successful(self, monkeypatch):
+        """Mock os.path.exists to return True"""
+        monkeypatch.setattr(os.path, "exists", lambda _: True)
+
+        # Mock git.Repo to return a mock object with the desired active_branch
+        class MockRepo:
+            active_branch = "your_branch"  # Replace "your_branch" with the desired branch name
+            git = git.cmd.Git()  # Mock git attribute to avoid actual git pull
+
+        monkeypatch.setattr(git, "Repo", lambda _: MockRepo())
+
+        your_class_instance = GitActions()
+
+        result = your_class_instance.pull()
+
+        assert result is False
+
+    def test_repo_not_exists(self):
+        """Mock os.path.exists to return False"""
+        with pytest.raises(FileNotFoundError):
+            os.path.exists = lambda _: False
+
+            your_class_instance = GitActions()
+
+            your_class_instance.pull()
+
+
+class TestNoUrlDataFoundError:
+    """NoUrlDataFound"""
+    def test_exception_message(self):
+        url = "https://example.com/data"
+        message = "No data found at the given URL"
+        error_instance = NoUrlDataFoundError(url, message)
+
+        assert error_instance.url == url
+        assert error_instance.message == message
+        assert str(error_instance) == f"{message} - {url}"
