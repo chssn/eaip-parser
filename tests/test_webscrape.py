@@ -112,7 +112,7 @@ def test_search_enr_3_x():
 
     webscrapi = Webscrape()
     file_names = [
-        ("ENR-3.2_151.csv", "ENR-3.2-LOWER-Q63.txt"),
+        ("ENR-3.2_151.csv", "ENR-3.2-UPPER-Q63.txt"),
         ("ENR-3.2_67.csv", "ENR-3.2-LOWER-N16.txt"),
         ("ENR-3.2_88.csv", "ENR-3.2-LOWER-N90.txt")
         ]
