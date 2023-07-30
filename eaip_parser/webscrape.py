@@ -569,18 +569,13 @@ class Webscrape:
     def search_enr_4_1(self, df_enr_4:pd.DataFrame, no_build:bool=False) -> list:
         """Generic ENR 4.1 search actions"""
 
-        # Output format is ID FREQ LAT LON ; Name
         # Start the iterator
         output = []
         for index, row in df_enr_4.iterrows():
-            # grp 1 & 2
             name = re.match(r"^([A-Z\s\']+)\s\s([VORDME]{3}(\/[VORDME]{3})?)", row["name"])
-            # grp 1
             rid = re.match(r"^([A-Z]{3})$", row["id"])
-            # grp 3 then 2 or 5
             freq = re.match(r"(\d{3}\.\d{3})\sMHz", row["frequency"])
             tacan = re.match(r"(\d{2,3}[XY]{1})", row["frequency"])
-            # grp 1 and 3
             coords = re.match(
                 r"^(\d{6}(\.\d{2})?[NS])(?:\s+)(\d{7}(\.\d{2})?[EW])$", row["coordinates"])
 
@@ -612,6 +607,7 @@ class Webscrape:
                 elif freq:
                     freq_out = freq[1]
 
+                # Output format is ID FREQ LAT LON ; Name
                 line = f"{rid[1]} {freq_out} {coord_out} ; {name[1].title()} {dme}"
                 output.append(line)
                 logger.debug(line.rstrip())
@@ -625,7 +621,7 @@ class Webscrape:
             self.parse_enr_4_1()
         df_out = pd.read_csv(f"{functions.work_dir}\\DataFrames\\ENR-4.1.csv")
         output = self.search_enr_4_1(df_out, no_build=no_build)
-        with open(f"{functions.work_dir}\\DataFrames\\VOR_UK.txt", "w") as file:
+        with open(f"{functions.work_dir}\\DataFrames\\VOR_UK.txt", "w", encoding="utf-8") as file:
             for line in output:
                 file.write(f"{line}\n")
 
