@@ -112,6 +112,7 @@ def test_search_enr_3_x():
         ("ENR-3.2_67.csv", "ENR-3.2-LOWER-N16.txt"),
         ("ENR-3.2_88.csv", "ENR-3.2-LOWER-N90.txt"),
         ("ENR-3.2_22.csv", "ENR-3.2-LOWER-L603.txt"),
+        ("ENR-3.2_5.csv", "ENR-3.2-LOWER-L15.txt"),
         ]
     for file_in, file_out in file_names:
         df_out = pd.read_csv(f"tests\\test_data\\{file_in}")
