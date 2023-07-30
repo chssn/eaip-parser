@@ -406,28 +406,39 @@ class Webscrape:
                             point_plus = f"{split_route[idx+1]}  "
                         else:
                             point_plus = split_route[idx+1]
-                        file.write(
-                            f"{point} {point} {point_plus} {point_plus.rstrip()}\n")
+
+                        if point == "NCS!":
+                            file.write(";non continuous section\n")
+                        elif point_plus == "NCS!":
+                            pass
+                        else:
+                            line_to_write = f"{point} {point} {point_plus} {point_plus.rstrip()}"
+                            if idx + 1 == route_len - 1:
+                                file.write(line_to_write)
+                            else:
+                                file.write(f"{line_to_write}\n")
 
         route_name = None
         vor_dme = {}
         nav_point = {}
         route_upper = None
         route_lower = None
-        upper_len = 0
-        lower_len = 0
+        last_point = None
         uplo = None
         point = None
+        upper_counter = 0
+        lower_counter = 0
+        point_counter = 0
         for index, row in df_enr_3.iterrows():
             # Only look at rows which have something in the 3rd column
             # This will filter out all the short rows which are of little value
             if pd.notna(row["coordinates_bearing"]):
                 if row["route"] == row["name"] and re.match(r"^[A-Z]{1,2}\d{1,3}$", row["name"]):
                     # Check to see if this is a route name
-                    logger.debug(f'{row["name"]} {index}')
+                    logger.debug(f'{row["name"]} (Index: {index})')
                     route_name = row["name"]
-                    route_upper = f"{row['name']}"
-                    route_lower = f"{row['name']}"
+                    route_upper = route_name
+                    route_lower = route_name
                 elif row["route"] == "∆" or (not pd.notna(row["route"]) and row["route"]):
                     # Check to see if this is a significant point
                     coordinates = re.match(
@@ -449,11 +460,48 @@ class Webscrape:
                             # If it isn't VOR/DME/NDB then is must be a nav point
                             nav_point[row["name"]] = coord_group
                             point = row['name']
+
+                        if uplo == 0:
+                            # If the last route segment was flagged as an upper airway then...
+                            if upper_counter == point_counter:
+                                route_upper = f"{route_upper} {point}"
+                            else:
+                                route_upper = f"{route_upper} NCS! {last_point} {point}"
+                                upper_counter = point_counter
+                            upper_counter += 1
+                        elif uplo == 1:
+                            # If the last route segment was flagged as an lower airway then...
+                            logger.debug(f"Counters: {lower_counter} {point_counter}")
+                            if lower_counter == point_counter:
+                                route_lower = f"{route_lower} {point}"
+                            else:
+                                route_lower = f"{route_lower} NCS! {last_point} {point}"
+                                lower_counter = point_counter
+                            lower_counter += 1
+                        elif uplo == 2 or uplo is None:
+                            # If the last route segment was flagged as both airway types then...
+                            if upper_counter == point_counter:
+                                route_upper = f"{route_upper} {point}"
+                            else:
+                                route_upper = f"{route_upper} NCS! {last_point} {point}"
+                                upper_counter = point_counter
+
+                            if lower_counter == point_counter:
+                                route_lower = f"{route_lower} {point}"
+                            else:
+                                route_lower = f"{route_lower} NCS! {last_point} {point}"
+                                lower_counter = point_counter
+                            upper_counter += 1
+                            lower_counter += 1
+
                         logger.debug(f"{route_name} - {row['name']} - {coord_group}")
+                        point_counter += 1
+                        last_point = point
                     else:
                         raise ValueError(f"No coordinates match for {row['coordinates_bearing']}")
                 elif row["route"] == row["name"] and re.match(r"^\(.*\)$", row["name"]):
                     vert_limits = re.findall(r"FL\s(\d{2,3})", row["vertical_limits"])
+                    logger.debug(row["vertical_limits"])
                     # An airway is classed as upper if it operates >=FL250
                     if len(vert_limits) in [1,2]:
                         upper_fl = vert_limits[0]
@@ -464,61 +512,25 @@ class Webscrape:
                         if (int(upper_fl) >= self.airway_split and
                             int(lower_fl) >= self.airway_split):
                             # Upper airway only
-                            route_upper = f"{route_upper} {point}"
+                            logger.debug("Upper airway only")
                             uplo = 0
                         elif (int(upper_fl) < self.airway_split and
                               int(lower_fl) < self.airway_split):
                             # Lower airway only
-                            route_lower = f"{route_lower} {point}"
+                            logger.debug("Lower airway only")
                             uplo = 1
                         else:
                             # Must be both upper and lower
-                            route_upper = f"{route_upper} {point}"
-                            route_lower = f"{route_lower} {point}"
+                            logger.debug("Both airways")
                             uplo = 2
                     else:
                         ve_text = f"Can't find upper and lower levels from {row['vertical_limits']}"
                         raise ValueError(ve_text)
-            elif row["route"] == row["name"] and not pd.notna(row["coordinates_bearing"]):
-                # Deal with entries that don't have any limits defined...
-                route_upper = f"{route_upper} {point}"
-                route_lower = f"{route_lower} {point}"
-
-        # Assign the final point to the correct route
-        upper_split = route_upper.split(" ")
-        lower_split = route_lower.split(" ")
-        upper_len = len(upper_split)
-        lower_len = len(lower_split)
-
-        if (upper_len > 1 and
-            lower_len > upper_len and
-            (upper_len + 1) <= lower_len and
-            lower_split[-1] not in route_upper
-            ):
-            route_upper = f"{route_upper} {lower_split[-1]}"
-        elif uplo == 0:
-            route_upper = f"{route_upper} {point}"
-
-        if (lower_len > 1 and
-            upper_len > lower_len and
-            (lower_len + 1) <= upper_len and
-            upper_split[-1] not in route_lower
-            ):
-            route_lower = f"{route_lower} {upper_split[-1]}"
-        elif uplo == 1:
-            route_lower = f"{route_lower} {point}"
-
-        if uplo == 2:
-            route_upper = f"{route_upper} {point}"
-            route_lower = f"{route_lower} {point}"
-
-        if uplo > 2 or uplo < 0:
-            raise ValueError(f"Unable to set last point - {point}")
 
         # Write the output to a file
-        if upper_len > 1:
+        if len(route_upper) > 1:
             write_to_file(route_upper, True)
-        if lower_len > 1:
+        if len(route_lower) > 1:
             write_to_file(route_lower, False)
 
         return [vor_dme, nav_point]
