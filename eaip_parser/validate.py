@@ -75,6 +75,7 @@ class UkSectorFile:
                         lines_b = file_b.readlines()
                         end_a = str(side_a).split('\\')[-1]
                         end_b = str(side_b).split('\\')[-1]
+                        logger.debug(end_b)
                         for line_a, line_b in zip(lines_a, lines_b):
                             # Regex to match the line formatting of:
                             # POINT_A POINT_A POINT_B POINT_B
@@ -95,16 +96,14 @@ class UkSectorFile:
                                     check_okay = False
                                     if line_a in lines_b:
                                         # If line A exists somewhere in file B
-                                        logger.info(end_a)
                                         logger.info(
-                                            f"{line_a.rstrip()} wasn't in the expected place "
-                                            f"however does exist in {end_b}")
+                                            f"{line_a.rstrip()} wasn't at the expected place in "
+                                            f"{end_a}, however does exist in {end_b}")
                                     elif line_b in line_a:
                                         # If line B exists somewhere in file A
-                                        logger.info(end_b)
                                         logger.info(
-                                            f"{line_b.rstrip()} wasn't in the expected place "
-                                            f"however does exist in {end_a}")
+                                            f"{line_b.rstrip()} wasn't at the expected place in "
+                                            f"{end_b}, however does exist in {end_a}")
                                     elif (match_a.group(1) == match_b.group(3) and
                                         match_a.group(2) == match_b.group(4)):
                                         # Attempt to catch where one of the files may have points
@@ -112,17 +111,18 @@ class UkSectorFile:
                                         logger.warning(f"{a_type} {file} may be back-to-front")
                                     else:
                                         # If there isn't any match for line A in file B...
-                                        logger.error(f"No match for contents of {a_type} {file}")
+                                        
                                         logger.trace(f"{side_a} - {line_a.rstrip()}")
                                         logger.trace(f"{side_b} - {line_b.rstrip()}")
-                        if check_okay:
-                            # If everything matches then there isn't anything to do!
-                            logger.trace(f"Full line match for {file}")
-                        else:
-                            # If anything doesn't line up then print both files side by side
-                            print(f"{a_type}  |  {end_a}  |  {end_b}")
-                            for line_a, line_b in zip(lines_a, lines_b):
-                                print(f"{line_a.rstrip()}  |  {line_b.rstrip()}")
+                    if check_okay:
+                        # If everything matches then there isn't anything to do!
+                        logger.trace(f"Full line match for {file}")
+                    else:
+                        # If anything doesn't line up then print both files side by side
+                        logger.warning(f"No match for contents of {a_type} {file}")
+                        print(f"{a_type}  |  {end_a}  |  {end_b}")
+                        for line_a, line_b in zip(lines_a, lines_b):
+                            print(f"{line_a.rstrip()}  |  {line_b.rstrip()}")
 
             for file in scraped_list:
                 # If there is no matching file, then it isn't there

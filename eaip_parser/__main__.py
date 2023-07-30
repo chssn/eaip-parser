@@ -6,6 +6,7 @@ Chris Parkinson (@chssn)
 #!/usr/bin/env python3.8
 
 # Standard Libraries
+import sys
 
 # Third Party Libraries
 from loguru import logger
@@ -18,6 +19,8 @@ from . import validate, webscrape
 def main() -> None:
     """Main program thread"""
 
+    logger.remove()
+    logger.add(sys.stderr, level="INFO")
     logger.info(f"eAIP Parser and Sector File Validator - v{eaip_parser.__version__}")
 
     # Run the webscraper
