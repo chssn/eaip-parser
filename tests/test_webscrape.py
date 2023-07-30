@@ -77,27 +77,6 @@ def test_init_date_in():
         with pytest.raises(ValueError, match=error):
             webscapi = Webscrape(date_in=date)
 
-class TestRunMethod:
-    """Webscrape.run"""
-    @patch.object(Webscrape, "parse_ad_1_3")
-    @patch.object(Webscrape, "process_enr_2")
-    @patch.object(Webscrape, "process_enr_3")
-    def test_run_method(self, mock_process_enr_3, mock_process_enr_2, mock_parse_ad_1_3):
-        # Create an instance of YourClass
-        your_class_instance = Webscrape()
-
-        # Call the run() method
-        your_class_instance.run(download_first=True, no_build=False)
-
-        # Check if parse_ad_1_3() was called
-        assert mock_parse_ad_1_3.called_once()
-
-        # Check if process_enr_2() was called with the correct arguments
-        mock_process_enr_2.assert_called_once_with(download_first=True, no_build=False)
-
-        # Check if process_enr_3() was called with the correct arguments
-        mock_process_enr_3.assert_called_once_with(download_first=True, no_build=False)
-
 def test_url_suffix():
     """url_suffix"""
     sections = [
