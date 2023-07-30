@@ -388,6 +388,13 @@ class Webscrape:
         def write_to_file(route:str, is_upper:bool):
             split_route = route.split(" ")
             route_len = len(split_route)
+            logger.debug(f"{is_upper} {split_route}")
+            if len(split_route) > 2:
+                if split_route[2] == "NCS!":
+                    start = 3
+                else:
+                    start = 1
+
             if is_upper:
                 uorl = "UPPER"
             else:
@@ -395,7 +402,7 @@ class Webscrape:
 
             with open(f"{functions.work_dir}\\DataFrames\\ENR-3.2-{uorl}-{split_route[0]}.txt",
                 "w", encoding="utf-8") as file:
-                for idx in range(1, route_len-1, 1):
+                for idx in range(start, route_len-1, 1):
                     if (idx + 1) < route_len:
                         # If the point is only 3 characters, it needs padding with 2 extra spaces
                         if len(split_route[idx]) == 3:
