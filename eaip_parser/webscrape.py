@@ -81,6 +81,7 @@ class Webscrape:
         self.parse_ad_1_3()
         self.process_enr_2(download_first=download_first, no_build=no_build)
         self.process_enr_3(download_first=download_first, no_build=no_build)
+        self.process_enr_4(download_first=download_first, no_build=no_build)
 
     def url_suffix(self, section:str) -> str:
         """Returns a url suffix formatted for the European eAIP standard"""
