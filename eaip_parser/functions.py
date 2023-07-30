@@ -290,3 +290,42 @@ class NoUrlDataFoundError(Exception):
         self.url = url
         self.message = message
         super().__init__(f"{self.message} - {self.url}")
+
+
+class TacanVor:
+    """Converts TACAN to VOR and vice versa"""
+
+    def validate_tacan(self, tacan:str) -> tuple:
+        """Validates a string to see if it is a TACAN channel"""
+
+        validate = re.match(r"^(\d{1,3})([XY]{1})$", tacan)
+        if validate:
+            return (validate[1], validate[2])
+        raise ValueError("TACAN channels are in the format (\d{1,3})([XY]{1})")
+
+    def tacan_to_vor_ils(self, tacan:str) -> str:
+        """Converts TACAN to VOR"""
+
+        validate = self.validate_tacan(tacan)
+
+        # VOR & ILS in the range 17X to 59Y and 70X to 126Y
+        # Start from 17X = 108.00MHz and 70X = 112.3MHz
+        # For each int increase then this should be +100KHz
+        # If the suffix is X then nothing else needs doing
+        # If the suffix is Y then an additional +50KHz
+        # source: https://wiki.radioreference.com/index.php/\
+        # Instrument_Landing_System_(ILS)_Frequencies
+
+        if int(validate[0]) >= 17 and int(validate[0]) <= 59:
+            diff = int(validate[0]) - 17
+            increment = (diff * 0.1) + 108
+            if validate[1] == "Y":
+                increment += 0.05
+        elif int(validate[0]) >= 70 and int(validate[0]) <= 126:
+            diff = int(validate[0]) - 70
+            increment = (diff * 0.1) + 112.3
+            if validate[1] == "Y":
+                increment += 0.05
+        else:
+            raise ValueError("Channel needs to be in the range 17-59 and 70-126")
+        return str(format(increment, '.2f'))

@@ -69,6 +69,9 @@ class Webscrape:
 
         self.date_in = date_in
 
+        # Setup Tacan to VOR/ILS conversion
+        self.tacan_vor = functions.TacanVor()
+
         # Define at which FL an airway should be marked as 'uppper'
         self.airway_split = 245
 
