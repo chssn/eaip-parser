@@ -389,11 +389,10 @@ class Webscrape:
             split_route = route.split(" ")
             route_len = len(split_route)
             logger.debug(f"{is_upper} {split_route}")
+            start = 1
             if len(split_route) > 2:
                 if split_route[2] == "NCS!":
                     start = 3
-                else:
-                    start = 1
 
             if is_upper:
                 uorl = "UPPER"
