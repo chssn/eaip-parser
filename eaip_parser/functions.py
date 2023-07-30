@@ -43,7 +43,7 @@ def is_25khz(frequency:str):
                 return f"{str(int(freq_match[1])+1)}.000"
             return f"{freq_match[1]}.{str(round_decimal).zfill(3)}"
     else:
-        raise ValueError("Expected frequency in the format nnn.nnn KHz")
+        raise ValueError("Expected frequency in the format nnn.nnn MHz")
 
 
 class GitActions:
