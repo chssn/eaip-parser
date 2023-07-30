@@ -15,7 +15,7 @@ import pytest
 
 # Local Libraries
 import eaip_parser.functions as functions
-from eaip_parser.functions import Geo, GitActions, NoUrlDataFoundError
+from eaip_parser.functions import Geo, GitActions, TacanVor, NoUrlDataFoundError
 
 def test_is_25khz():
     """is_25khz"""
@@ -320,3 +320,19 @@ class TestNoUrlDataFoundError:
         assert error_instance.url == url
         assert error_instance.message == message
         assert str(error_instance) == f"{message} - {url}"
+
+
+class TestTacanVor:
+    """TacanVor"""
+    def test_tacan_to_vor_ils(self):
+        test_cases = [
+            ("37X", "110.00"),
+            ("44X", "110.70"),
+            ("44Y", "110.75"),
+            ("123Y", "117.65"),
+            ("126X", "117.90"),
+            ("126Y", "117.95")
+        ]
+        test_tacan = TacanVor()
+        for tacan, vor in test_cases:
+            assert test_tacan.tacan_to_vor_ils(tacan) == vor
