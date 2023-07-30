@@ -246,6 +246,33 @@ class Webscrape:
 
         return table_out
 
+    @parse_table("ENR-4.1")
+    def parse_enr_4_1(self, tables:list=None) -> pd.DataFrame:
+        """Process data from ENR 4.1 - RADIO NAVIGATION AIDS - EN-ROUTE"""
+
+        tdf = tables[0]
+
+        # Modify header row
+        column_headers = [
+            "name",
+            "id",
+            "frequency",
+            "hrs",
+            "coordinates",
+            "elev",
+            "fra",
+            "remarks"
+        ]
+        tdf.columns = column_headers
+
+        # Name the columns to keep
+        tdf = tdf[["name", "id", "frequency", "coordinates"]]
+
+        # Reset the index
+        tdf.reset_index(drop=True, inplace=True)
+
+        return tdf
+
     def search_enr_2_x(self, df_enr_2:pd.DataFrame, file_name:str, no_build:bool=False):
         """Generic ENR 2 search actions"""
 
@@ -537,6 +564,69 @@ class Webscrape:
         else:
             convert_coords_dump_df(vor_dme, "VOR_DME")
             convert_coords_dump_df(nav_aid, "NAV_AID")
+
+    def search_enr_4_1(self, df_enr_4:pd.DataFrame, no_build:bool=False) -> list:
+        """Generic ENR 4.1 search actions"""
+
+        # Output format is ID FREQ LAT LON ; Name
+        # Start the iterator
+        output = []
+        for index, row in df_enr_4.iterrows():
+            # grp 1 & 2
+            name = re.match(r"^([A-Z\s\']+)\s\s([VORDME]{3}(\/[VORDME]{3})?)", row["name"])
+            # grp 1
+            rid = re.match(r"^([A-Z]{3})$", row["id"])
+            # grp 3 then 2 or 5
+            freq = re.match(r"(\d{3}\.\d{3})\sMHz", row["frequency"])
+            tacan = re.match(r"(\d{2,3}[XY]{1})", row["frequency"])
+            # grp 1 and 3
+            coords = re.match(
+                r"^(\d{6}(\.\d{2})?[NS])(?:\s+)(\d{7}(\.\d{2})?[EW])$", row["coordinates"])
+
+            # If there is match for everything on this record
+            if name and rid and (freq or tacan) and coords:
+                if no_build:
+                    coord_out = row["coordinates"]
+                else:
+                    # Needs to be sent as double coords due to 3rd party limitations
+                    coord_xform = self.build.request_output(
+                        f'{row["coordinates"]} {row["coordinates"]}')
+                    xform_split = coord_xform.split(" ")
+                    coord_out = f"{xform_split[0]} {xform_split[1]}"
+
+                if name[2] == "DME":
+                    dme = "(DME)"
+                else:
+                    dme = ""
+
+                if freq and tacan:
+                    freq_out = freq[1]
+                    # Quick sanity check that the given TACAN ch == the given frequency
+                    if freq_out != self.tacan_vor.tacan_to_vor_ils(tacan[1]):
+                        raise ValueError(
+                            f"The given TACAN channel {tacan[1]} doesn't match"
+                            f"the given frequency {freq_out}")
+                elif tacan:
+                    freq_out = self.tacan_vor.tacan_to_vor_ils(tacan[1])
+                elif freq:
+                    freq_out = freq[1]
+
+                line = f"{rid[1]} {freq_out} {coord_out} ; {name[1].title()} {dme}"
+                output.append(line)
+                logger.debug(line.rstrip())
+
+        return output
+
+    def process_enr_4(self, download_first:bool=True, no_build:bool=False) -> None:
+        """Process ENR 2 data"""
+
+        if download_first:
+            self.parse_enr_4_1()
+        df_out = pd.read_csv(f"{functions.work_dir}\\DataFrames\\ENR-4.1.csv")
+        output = self.search_enr_4_1(df_out, no_build=no_build)
+        with open(f"{functions.work_dir}\\DataFrames\\VOR_UK.txt", "w") as file:
+            for line in output:
+                file.write(f"{line}\n")
 
     @staticmethod
     def generate_file_names(file_start:str, file_type:str="csv") -> list:
