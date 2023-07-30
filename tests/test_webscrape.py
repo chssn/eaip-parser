@@ -6,17 +6,16 @@ Chris Parkinson (@chssn)
 #!/usr/bin/env python3.8
 
 # Standard Libraries
-from datetime import date
-from unittest.mock import patch, Mock
+import filecmp
 
 # Third Party Libraries
 import pandas as pd
 import pytest
-import requests
-from bs4 import BeautifulSoup
+from unittest.mock import MagicMock, patch
 
 # Local Libraries
 import tests.standard_test_cases as stc
+from eaip_parser import functions, lists
 from eaip_parser.webscrape import Webscrape
 
 def test_init_country():
@@ -27,16 +26,23 @@ def test_init_country():
     assert webscrapi.country == "EG"
 
     # Test all lowercase
-    webscrapi = Webscrape(country_code="ir")
-    assert webscrapi.country == "IR"
+    webscrapi = Webscrape(country_code="eg")
+    assert webscrapi.country == "EG"
 
     # Test mixed case
-    webscrapi = Webscrape(country_code="zP")
-    assert webscrapi.country == "ZP"
+    webscrapi = Webscrape(country_code="eG")
+    assert webscrapi.country == "EG"
+
+    # Test all countries given in the list
+    for country, language in lists.country_codes.items():
+        webscrapi = Webscrape(country_code=country)
+        assert webscrapi.language == language
 
     # Test invalid data
     with pytest.raises(ValueError):
         webscrapi = Webscrape(country_code="England")
+    with pytest.raises(KeyError):
+        webscrapi = Webscrape(country_code="IR")
 
 def test_init_cycle():
     """__init__"""
@@ -50,147 +56,101 @@ def test_init_next_cycle():
         webscrapi = Webscrape(date_in=input_date)
         assert webscrapi.cycle_url == expected_result
 
-webscrape = Webscrape(date_in="2021-05-16")
-
-@pytest.fixture
-def webscrape_object():
-    """Define a fixture to create an instance of YourClassName for testing"""
-    return Webscrape()
-
-@pytest.fixture
-def mock_requests_get():
-    """Define a fixture to mock the requests.get function"""
-    with patch("requests.get") as mock_get:
-        yield mock_get
-
-def test_get_table_soup_success(webscrape_object, mock_requests_get):
-    """Mock the requests.get function to return a successful response"""
-    post_url = "example_post_url"
-    mock_response = Mock()
-    mock_response.status_code = 200
-    mock_response.content = b"<html><body><table></table></body></html>"
-    mock_requests_get.return_value = mock_response
-
-    # Call the function under test
-    soup = webscrape_object.get_table_soup(post_url)
-
-    # Assert the expected behavior
-    assert isinstance(soup, BeautifulSoup)
-
-def test_get_table_soup_connection_error(webscrape_object, mock_requests_get):
-    """Mock the requests.get function to raise a ConnectTimeout"""
-    post_url = "example_post_url"
-    mock_requests_get.side_effect = requests.ConnectTimeout("Connection Timeout")
-
-    with pytest.raises(requests.ConnectTimeout):
-        # Call the function under test
-        webscrape_object.get_table_soup(post_url)
-
-def test_get_table_soup_error_status_code(webscrape_object, mock_requests_get):
-    """Mock the requests.get function to return an error response"""
-    post_url = "example_post_url"
-    mock_response = Mock()
-    mock_response.status_code = 404
-    mock_requests_get.return_value = mock_response
-
-    # Call the function under test
-    soup = webscrape_object.get_table_soup(post_url)
-
-    # Assert the expected behavior
-    assert soup is False
-
-def test_parse_ad_01_data(webscrape_object):
-    """Test cases for parse_ad_01_data function"""
-
-    # Mock the get_table_soup method to return a BeautifulSoup object
-    with open("tests/test_ad_01_data.html", "r", encoding="utf-8") as mock_data:
-        mock_soup = BeautifulSoup(mock_data, "lxml")
-    webscrape_object.get_table_soup = lambda _: mock_soup
-
-    # Call the function under test
-    result_df = webscrape_object.parse_ad_01_data()
-
-    # Define the expected DataFrame
-    expected_df = pd.read_csv("tests/test_ad_01_data.csv", index_col=0)
-
-    # Assert the DataFrame content and structure
-    pd.testing.assert_frame_equal(result_df, expected_df, check_dtype=False)
-
-def test_parse_ad_02_data(webscrape_object):
-    """Test cases for parse_ad_02_data function"""
-
-    # Mock the get_table_soup method to return a BeautifulSoup object
-    with open("tests/test_ad_02_data.html", "r", encoding="utf-8") as mock_data:
-        mock_soup = BeautifulSoup(mock_data, "lxml")
-    webscrape_object.get_table_soup = lambda _: mock_soup
-
-    # Call the function under test
-    test_iterator = pd.read_csv("tests/test_ad_02_ad_01_data.csv", index_col=0)
-    results = webscrape_object.parse_ad_02_data(df_ad_01=test_iterator)
-
-    # Define the expected DataFrame
-    expected_df_0 = pd.read_csv("tests/test_ad_02_data_0.csv", index_col=0)
-    expected_df_1 = pd.read_csv("tests/test_ad_02_data_1.csv", index_col=0, dtype={'runway': object})
-    expected_df_2 = pd.read_csv("tests/test_ad_02_data_2.csv", index_col=0, dtype={'frequency': object})
-
-    # Assert the DataFrame content and structure
-    pd.testing.assert_frame_equal(results[0], expected_df_0)
-    pd.testing.assert_frame_equal(results[1], expected_df_1, check_dtype=False)
-    pd.testing.assert_frame_equal(results[2], expected_df_2)
-
-def test_parse_enr016_data(webscrape_object):
-    """Test cases for parse_enr_016_data function"""
-
-    # Mock the get_table_soup method to return a BeautifulSoup object
-    with open("tests/test_enr_016_data.html", "r", encoding="utf-8") as mock_data:
-        mock_soup = BeautifulSoup(mock_data, "lxml")
-    webscrape_object.get_table_soup = lambda _: mock_soup
-
-    # Call the function under test
-    test_iterator = pd.read_csv("tests/test_ad_01_data.csv", index_col=0)
-    result_df = webscrape_object.parse_enr_016_data(df_ad_01=test_iterator)
-
-    # Define the expected DataFrame
-    expected_df = pd.read_csv("tests/test_enr_016_data.csv", index_col=0, dtype={'start': object, 'end': object})
-
-    # Assert the DataFrame content and structure
-    pd.testing.assert_frame_equal(result_df, expected_df)
-
-def test_parse_enr02_data():
-    pass
-
-def test_parse_enr03_data(webscrape_object):
-    """Test cases for parse_enr_03_data function"""
-
-    sections = [1, 3]
-    for section in sections:
-        # Mock the get_table_soup method to return a BeautifulSoup object
-        with open(f"tests/test_enr_03{section}_data.html", "r", encoding="utf-8") as mock_data:
-            mock_soup = BeautifulSoup(mock_data, "lxml")
-        webscrape_object.get_table_soup = lambda _: mock_soup
-
-        # Call the function under test
-        result_df = webscrape_object.parse_enr_03_data(section=section)
-
-        # Define the expected DataFrame
-        expected_df = pd.read_csv(f"tests/test_enr_03{section}_data.csv", index_col=0)
-        expected_points_df = pd.read_csv(f"tests/test_enr_03{section}_points.csv", index_col=0)
-
-        # Assert the DataFrame content and structure
-        pd.testing.assert_frame_equal(result_df[0], expected_df)
-        pd.testing.assert_frame_equal(result_df[1], expected_points_df)
-
-    with pytest.raises(ValueError):
-        webscrape.parse_enr_03_data(7)
-
-    with pytest.raises(ValueError):
-        webscrape.parse_enr_03_data("7")
-
-def test_search():
-    """search"""
-    test_cases = [
-        ("eaghyadfhdfah", "TDME;GEO_LAT", "eaghyadfhdfah</span>diupoahta89uya9jh43>TDME;GEO_LATuyigpgpiu", "eaghyadfhdfah"),
+def test_init_date_in():
+    """__init__"""
+    dates = [
+        "2000-01-01",
+        "2099-12-31",
     ]
-    for find, name, string, expected_result in test_cases:
-        output = Webscrape.search(find, name, string)
-        assert output[0] == expected_result
+    for date in dates:
+        webscapi = Webscrape(date_in=date)
+        assert webscapi.date_in == date
+
+    bad_dates = [
+        ("2010-00-00", "month must be in 1..12"),
+        ("2010-13-39", "month must be in 1..12"),
+        ("2010-02-30", "day is out of range for month"),
+        ("A", "Invalid isoformat string: 'A'"),
+        ("2010-2-8", "Invalid isoformat string: '2010-2-8'")
+    ]
+    for date, error in bad_dates:
+        with pytest.raises(ValueError, match=error):
+            webscapi = Webscrape(date_in=date)
+
+def test_url_suffix():
+    """url_suffix"""
+    sections = [
+        "AD-1.4",
+        "wgobna3489au tafgh[WN]",
+        1234
+    ]
+    webscrapi = Webscrape()
+    for section in sections:
+        wso = webscrapi.url_suffix(section)
+        assert wso == str(f"EG-{section}-en-GB.html")
+
+def test_search_enr_2_x():
+    """search_enr_2_x"""
+
+    webscrapi = Webscrape()
+    file_names = ["ENR-2.1_0","ENR-2.1_1", "ENR-2.2_0", "ENR-2.2_1", "ENR-2.2_2"]
+    for proc in file_names:
+        df_out = pd.read_csv(f"tests\\test_data\\{proc}.csv")
+        # The function being tested
+        webscrapi.search_enr_2_x(df_out, proc, no_build=True)
+        filecmp.clear_cache()
+        assert filecmp.cmp(
+            f"tests\\test_data\\{proc}_AIRSPACE_NB.sct",
+            f"eaip_parser\\DataFrames\\{proc}_AIRSPACE.sct", shallow=False) is True
+
+def test_search_enr_3_x():
+    """search_enr_3_x"""
+
+    webscrapi = Webscrape()
+    file_names = [
+        ("ENR-3.2_151.csv", "ENR-3.2-UPPER-Q63.txt"),
+        ("ENR-3.2_67.csv", "ENR-3.2-LOWER-N16.txt"),
+        ("ENR-3.2_88.csv", "ENR-3.2-LOWER-N90.txt")
+        ]
+    for file_in, file_out in file_names:
+        df_out = pd.read_csv(f"tests\\test_data\\{file_in}")
+        # The function being tested
+        webscrapi.search_enr_3_x(df_out)
+        filecmp.clear_cache()
+        assert filecmp.cmp(
+            f"tests\\test_data\\{file_out}",
+            f"eaip_parser\\DataFrames\\{file_out}", shallow=False) is True
+
+
+class TestGetTableMethod:
+    def test_get_table_with_tables(self):
+        # Create an instance of YourClass
+        your_class_instance = Webscrape()
+
+        # Mock the pd.read_html method to return a list of DataFrames
+        mock_tables = [pd.DataFrame({"Column1": [1, 2], "Column2": [3, 4]}), pd.DataFrame({"Column3": [5, 6], "Column4": [7, 8]})]
+        with patch("pandas.read_html", return_value=mock_tables) as mock_read_html:
+            # Call the get_table() method
+            result = your_class_instance.get_table(section="TestSection", match=".+")
+
+            # Check if pd.read_html was called with the correct arguments
+            mock_read_html.assert_called_once_with(your_class_instance.cycle_url + your_class_instance.url_suffix(section="TestSection"), flavor="bs4", match=".+")
+
+            # Check if the method returned the expected result
+            assert result == mock_tables
+
+    def test_get_table_no_tables(self):
+        # Create an instance of YourClass
+        your_class_instance = Webscrape()
+
+        # Mock the pd.read_html method to return an empty list
+        with patch("pandas.read_html", return_value=[]) as mock_read_html:
+            # Call the get_table() method and expect an exception to be raised
+            with pytest.raises(functions.NoUrlDataFoundError) as exc_info:
+                your_class_instance.get_table(section="TestSection", match=".+")
+
+            # Check if pd.read_html was called with the correct arguments
+            mock_read_html.assert_called_once_with(your_class_instance.cycle_url + your_class_instance.url_suffix(section="TestSection"), flavor="bs4", match=".+")
+
+            # Check if the correct exception was raised
+            assert str(exc_info.value) == "No data found at the given url - " + your_class_instance.cycle_url + your_class_instance.url_suffix(section="TestSection")

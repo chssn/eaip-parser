@@ -152,3 +152,5 @@ cython_debug/
 #.idea/
 
 DataFrames/
+Debug/
+UK-Sector-File/
