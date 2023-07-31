@@ -114,6 +114,15 @@ class Webscrape:
         except ValueError as error:
             logger.warning(f"{error} for {address}")
 
+    @staticmethod
+    def generate_file_names(file_start:str, file_type:str="csv") -> list:
+        """Generates an incremental list of filenames"""
+
+        path = f"{functions.work_dir}\\DataFrames\\"
+        enr_files = ([file for file in os.listdir(path) if
+                      file.startswith(file_start) and file.endswith(file_type)])
+        return enr_files
+
     @parse_table("AD-1.3")
     def parse_ad_1_3(self, tables:list=None) -> pd.DataFrame:
         """Process data from AD 1.3 - INDEX TO AERODROMES AND HELIPORTS"""
@@ -369,21 +378,6 @@ class Webscrape:
                 last_title = this_title[1]
             file.write(output)
 
-    def process_enr_2(self, download_first:bool=True, no_build:bool=False) -> None:
-        """Process ENR 2 data"""
-
-        if download_first:
-            self.parse_enr_2_1()
-            self.parse_enr_2_2()
-
-        def run_process(file_name:str) -> None:
-            df_out = pd.read_csv(f"{functions.work_dir}\\DataFrames\\{file_name}.csv")
-            self.search_enr_2_x(df_out, file_name, no_build=no_build)
-
-        file_names = ["ENR-2.1_0","ENR-2.1_1","ENR-2.2_0","ENR-2.2_1","ENR-2.2_2"]
-        for proc in file_names:
-            run_process(proc)
-
     def search_enr_3_x(self, df_enr_3:pd.DataFrame) -> list:
         """Generic ENR 3 search actions"""
 
@@ -543,49 +537,6 @@ class Webscrape:
 
         return [vor_dme, nav_point]
 
-    def process_enr_3(self, download_first:bool=True, no_build:bool=False) -> None:
-        """Process ENR 2 data"""
-
-        if download_first:
-            self.parse_enr_3_2()
-            self.parse_enr_3_3()
-
-        def run_process(file_name:str) -> list:
-            df_out = pd.read_csv(f"{functions.work_dir}\\DataFrames\\{file_name}")
-            search_results = self.search_enr_3_x(df_out)
-            return search_results
-
-        def convert_coords_dump_df(coord_in:dict, name:str) -> str:
-            for coord in coord_in.items():
-                # The coordinates need passing twice to work with the builder
-                # This is a 3rd party api limitation
-                xform = self.build.request_output(f"{coord[1]} {coord[1]}")
-                split_xform = xform.split(" ")
-                # Then we only need to return the first 2/4 results as they're duplicated
-                # This is an artifact from the api limitation already mentioned
-                coord_in[coord[0]] = f"{split_xform[0]} {split_xform[1]}"
-                logger.debug(f"{coord[0]} - {coord[1]} to {split_xform[0]} {split_xform[1]}")
-            # Save as a csv df
-            df_cc = pd.DataFrame.from_dict(coord_in, orient="index", columns=["lat/lon"])
-            df_cc = df_cc.reset_index()
-            df_cc.to_csv(f"{functions.work_dir}\\DataFrames\\{name}.csv")
-
-        vor_dme = {}
-        nav_aid = {}
-        file_names = self.generate_file_names("ENR-3")
-        for proc in file_names:
-            rpp = run_process(proc)
-            vor_dme.update(rpp[0])
-            nav_aid.update(rpp[1])
-
-        if no_build:
-            logger.warning("The 'no build' option has been set!")
-            print(vor_dme)
-            print(nav_aid)
-        else:
-            convert_coords_dump_df(vor_dme, "VOR_DME")
-            convert_coords_dump_df(nav_aid, "NAV_AID")
-
     def search_enr_4_1(self, df_enr_4:pd.DataFrame, no_build:bool=False) -> list:
         """ENR 4.1 search actions"""
 
@@ -637,6 +588,64 @@ class Webscrape:
 
         return output
 
+    def process_enr_2(self, download_first:bool=True, no_build:bool=False) -> None:
+        """Process ENR 2 data"""
+
+        if download_first:
+            self.parse_enr_2_1()
+            self.parse_enr_2_2()
+
+        def run_process(file_name:str) -> None:
+            df_out = pd.read_csv(f"{functions.work_dir}\\DataFrames\\{file_name}.csv")
+            self.search_enr_2_x(df_out, file_name, no_build=no_build)
+
+        file_names = ["ENR-2.1_0","ENR-2.1_1","ENR-2.2_0","ENR-2.2_1","ENR-2.2_2"]
+        for proc in file_names:
+            run_process(proc)
+
+    def process_enr_3(self, download_first:bool=True, no_build:bool=False) -> None:
+        """Process ENR 2 data"""
+
+        if download_first:
+            self.parse_enr_3_2()
+            self.parse_enr_3_3()
+
+        def run_process(file_name:str) -> list:
+            df_out = pd.read_csv(f"{functions.work_dir}\\DataFrames\\{file_name}")
+            search_results = self.search_enr_3_x(df_out)
+            return search_results
+
+        def convert_coords_dump_df(coord_in:dict, name:str) -> str:
+            for coord in coord_in.items():
+                # The coordinates need passing twice to work with the builder
+                # This is a 3rd party api limitation
+                xform = self.build.request_output(f"{coord[1]} {coord[1]}")
+                split_xform = xform.split(" ")
+                # Then we only need to return the first 2/4 results as they're duplicated
+                # This is an artifact from the api limitation already mentioned
+                coord_in[coord[0]] = f"{split_xform[0]} {split_xform[1]}"
+                logger.debug(f"{coord[0]} - {coord[1]} to {split_xform[0]} {split_xform[1]}")
+            # Save as a csv df
+            df_cc = pd.DataFrame.from_dict(coord_in, orient="index", columns=["lat/lon"])
+            df_cc = df_cc.reset_index()
+            df_cc.to_csv(f"{functions.work_dir}\\DataFrames\\{name}.csv")
+
+        vor_dme = {}
+        nav_aid = {}
+        file_names = self.generate_file_names("ENR-3")
+        for proc in file_names:
+            rpp = run_process(proc)
+            vor_dme.update(rpp[0])
+            nav_aid.update(rpp[1])
+
+        if no_build:
+            logger.warning("The 'no build' option has been set!")
+            print(vor_dme)
+            print(nav_aid)
+        else:
+            convert_coords_dump_df(vor_dme, "VOR_DME")
+            convert_coords_dump_df(nav_aid, "NAV_AID")
+
     def process_enr_4(self, download_first:bool=True, no_build:bool=False) -> None:
         """Process ENR 2 data"""
 
@@ -647,12 +656,3 @@ class Webscrape:
         with open(f"{functions.work_dir}\\DataFrames\\VOR_UK.txt", "w", encoding="utf-8") as file:
             for line in output:
                 file.write(f"{line}\n")
-
-    @staticmethod
-    def generate_file_names(file_start:str, file_type:str="csv") -> list:
-        """Generates an incremental list of filenames"""
-
-        path = f"{functions.work_dir}\\DataFrames\\"
-        enr_files = ([file for file in os.listdir(path) if
-                      file.startswith(file_start) and file.endswith(file_type)])
-        return enr_files
