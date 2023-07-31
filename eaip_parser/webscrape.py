@@ -30,10 +30,18 @@ def parse_table(section:str, match:str=".+") -> None:
             if tables:
                 dataframe = func(self, tables, *args, **kwargs)
                 if isinstance(dataframe, pd.DataFrame):
-                    dataframe.to_csv(f"{functions.work_dir}\\DataFrames\\{section}.csv")
+                    # If a single dataframe is passed
+                    df_path = os.path.join(functions.work_dir, "DataFrames", f"{section}.csv")
+                    dataframe.to_csv(df_path)
                 elif isinstance(dataframe, list):
+                    # If a list of dataframes are passed
                     for idx, dfl in enumerate(dataframe):
-                        dfl.to_csv(f"{functions.work_dir}\\DataFrames\\{section}_{idx}.csv")
+                        dfl_path = os.path.join(
+                            functions.work_dir,
+                            "DataFrames",
+                            f"{section}_{idx}.csv"
+                            )
+                        dfl.to_csv(dfl_path)
                 else:
                     raise TypeError("No pandas dataframe or list was found")
             else:
@@ -49,11 +57,9 @@ class Webscrape:
             next_cycle:bool=True,
             country_code:str="EG",
             date_in=0,
-            debug:bool=False
             ) -> None:
         airac_cycle = airac.Airac()
         self.cycle_url = airac_cycle.url(next_cycle=next_cycle, date_in=date_in)
-        self.debug = debug
 
         # Validate the entry for country_code
         if re.match(r"^[A-Z]{2}$", country_code.upper()):
@@ -66,13 +72,13 @@ class Webscrape:
         self.build = builder.KiloJuliett()
         # Use default settings
         self.build.settings()
-
+        # Set the data
         self.date_in = date_in
-
         # Setup Tacan to VOR/ILS conversion
         self.tacan_vor = functions.TacanVor()
-
-        # Define at which FL an airway should be marked as 'uppper'
+        # Prepare regex searches
+        self.regex = lists.Regex()
+        # Define at which FL an airway should be marked as 'upper'
         self.airway_split = 245
 
     def run(self, download_first:bool=True, no_build:bool=False) -> None:
@@ -98,12 +104,6 @@ class Webscrape:
             # Read the full address into a list of dataframes
             tables = pd.read_html(address, flavor="bs4", match=match)
 
-            # Debug functions
-            if self.debug:
-                # Outputs any found tables to csv files
-                for index, table in enumerate(tables):
-                    table.to_csv(f"{functions.work_dir}\\Debug\\{section}_{index}.csv")
-
             # If there is a least one table
             if len(tables) > 0:
                 return tables
@@ -111,6 +111,15 @@ class Webscrape:
                 raise functions.NoUrlDataFoundError(address)
         except ValueError as error:
             logger.warning(f"{error} for {address}")
+
+    @staticmethod
+    def generate_file_names(file_start:str, file_type:str="csv") -> list:
+        """Generates an incremental list of filenames"""
+
+        path = os.path.join(functions.work_dir, "DataFrames")
+        enr_files = ([file for file in os.listdir(path) if
+                      file.startswith(file_start) and file.endswith(file_type)])
+        return enr_files
 
     @parse_table("AD-1.3")
     def parse_ad_1_3(self, tables:list=None) -> pd.DataFrame:
@@ -150,15 +159,8 @@ class Webscrape:
         # The data object table[1] is for CTR
         ctr = tables[1]
         # Modify header row
-        column_headers = [
-            "data",
-            "unit",
-            "callsign",
-            "frequency",
-            "remarks",
-        ]
-        fir_uir_tma_cta.columns = column_headers
-        ctr.columns = column_headers
+        fir_uir_tma_cta.columns = lists.column_headers_airspace
+        ctr.columns = lists.column_headers_airspace
 
         return [fir_uir_tma_cta, ctr]
 
@@ -174,26 +176,15 @@ class Webscrape:
         cia = tables[28]
 
         # Modify header rows
-        atz_column_headers = [
-            "data",
-            "unit",
-            "callsign",
-            "frequency",
-            "remarks",
-        ]
-        fra_column_headers = [
+        column_headers = [
             "lateral_limits",
             "vertical_limits",
             "remarks"
         ]
-        cia_column_headers = [
-            "vertical_limits",
-            "lateral_limits",
-            "remarks"
-        ]
-        atz.columns = atz_column_headers
-        fra.columns = fra_column_headers
-        cia.columns = cia_column_headers
+
+        atz.columns = lists.column_headers_airspace
+        fra.columns = column_headers
+        cia.columns = column_headers
 
         return [atz, fra, cia]
 
@@ -203,20 +194,9 @@ class Webscrape:
 
         logger.debug(f"Found {len(tables)} ENR-3.2 tables")
         table_out = []
-        column_headers = [
-            "route",
-            "name",
-            "coordinates_bearing",
-            "distance",
-            "vertical_limits",
-            "ifr_limits_even",
-            "ifr_limits_odd",
-            "del1",
-            "del2",
-            "del3",
-        ]
+
         for table in tables:
-            table.columns = column_headers
+            table.columns = lists.column_headers_route
             table.drop(["del1","del2","del3"], axis=1)
             table_out.append(table)
 
@@ -228,20 +208,9 @@ class Webscrape:
 
         logger.debug(f"Found {len(tables)} ENR-3.3 tables")
         table_out = []
-        column_headers = [
-            "route",
-            "name",
-            "coordinates_bearing",
-            "distance",
-            "vertical_limits",
-            "ifr_limits_even",
-            "ifr_limits_odd",
-            "del1",
-            "del2",
-            "del3",
-        ]
+
         for table in tables:
-            table.columns = column_headers
+            table.columns = lists.column_headers_route
             table.drop(["del1","del2","del3"], axis=1)
             table_out.append(table)
 
@@ -274,6 +243,30 @@ class Webscrape:
 
         return tdf
 
+    @parse_table("ENR-4.4")
+    def parse_enr_4_4(self, tables:list=None) -> pd.DataFrame:
+        """Process data from ENR 4.1 - RADIO NAVIGATION AIDS - EN-ROUTE"""
+
+        tdf = tables[0]
+
+        # Modify header row
+        column_headers = [
+            "name",
+            "coordinates",
+            "route",
+            "fra",
+            "remarks",
+        ]
+        tdf.columns = column_headers
+
+        # Name the columns to keep
+        tdf = tdf[["name", "coordinates"]]
+
+        # Reset the index
+        tdf.reset_index(drop=True, inplace=True)
+
+        return tdf
+
     def search_enr_2_x(self, df_enr_2:pd.DataFrame, file_name:str, no_build:bool=False):
         """Generic ENR 2 search actions"""
 
@@ -283,13 +276,11 @@ class Webscrape:
         for index, row in df_enr_2.iterrows():
             if file_name == "ENR-2.2_1":
                 # Special case for UK Free Route Airspace
-                lat_lim = re.match(
-                    r"^([A-Z0-9\s]+)(\s\d{6}(\.\d{2})?[NS]{1}.*)", row["lateral_limits"]
-                    )
+                lat_lim = self.regex.lateral_limits(row["lateral_limits"])
                 logger.debug(str(lat_lim[2]).lstrip())
                 areas[lat_lim[1]] = str(lat_lim[2]).lstrip()
 
-                ver_lim = re.findall(r"(FL\s\d{1,3})", row["vertical_limits"])
+                ver_lim = self.regex.flight_level(row["vertical_limits"])
                 limit_text = f"UK Free Route Airspace from {ver_lim[0]} to {ver_lim[1]}"
                 logger.debug(limit_text)
                 limits_class[lat_lim[1]] = limit_text
@@ -327,7 +318,7 @@ class Webscrape:
                     # Cleanup the callsign
                     callsign = re.match(r"^([A-Z\s]+)(?:\s+[A-Z]{1}[a-z]+)", str(row['callsign']))
                     # Cleanup the frequency
-                    frequency = re.match(r"(\d{3}\.\d{3})", str(row["frequency"]))
+                    frequency = self.regex.frequency(row["frequency"])
                     if frequency:
                         check_25khz = functions.is_25khz(frequency[1])
                         if check_25khz:
@@ -341,8 +332,8 @@ class Webscrape:
 
         output = ""
         last_title = None
-        with open(f"{functions.work_dir}\\DataFrames\\{file_name}_AIRSPACE.sct",
-            "w", encoding="utf-8") as file:
+        file_path = os.path.join(functions.work_dir, "DataFrames", f"{file_name}_AIRSPACE.sct")
+        with open(file_path, "w", encoding="utf-8") as file:
             for idx, loc in areas.items():
                 # Request data
                 if no_build:
@@ -367,35 +358,30 @@ class Webscrape:
                 last_title = this_title[1]
             file.write(output)
 
-    def process_enr_2(self, download_first:bool=True, no_build:bool=False) -> None:
-        """Process ENR 2 data"""
-
-        if download_first:
-            self.parse_enr_2_1()
-            self.parse_enr_2_2()
-
-        def run_process(file_name:str) -> None:
-            df_out = pd.read_csv(f"{functions.work_dir}\\DataFrames\\{file_name}.csv")
-            self.search_enr_2_x(df_out, file_name, no_build=no_build)
-
-        file_names = ["ENR-2.1_0","ENR-2.1_1","ENR-2.2_0","ENR-2.2_1","ENR-2.2_2"]
-        for proc in file_names:
-            run_process(proc)
-
     def search_enr_3_x(self, df_enr_3:pd.DataFrame) -> list:
         """Generic ENR 3 search actions"""
 
         def write_to_file(route:str, is_upper:bool):
             split_route = route.split(" ")
             route_len = len(split_route)
+            logger.debug(f"{is_upper} {split_route}")
+            start = 1
+            if len(split_route) > 2:
+                if split_route[2] == "NCS!":
+                    start = 3
+
             if is_upper:
                 uorl = "UPPER"
             else:
                 uorl = "LOWER"
 
-            with open(f"{functions.work_dir}\\DataFrames\\ENR-3.2-{uorl}-{split_route[0]}.txt",
-                "w", encoding="utf-8") as file:
-                for idx in range(1, route_len-1, 1):
+            file_path = os.path.join(
+                functions.work_dir,
+                "DataFrames",
+                f"ENR-3.2-{uorl}-{split_route[0]}.txt"
+                )
+            with open(file_path, "w", encoding="utf-8") as file:
+                for idx in range(start, route_len-1, 1):
                     if (idx + 1) < route_len:
                         # If the point is only 3 characters, it needs padding with 2 extra spaces
                         if len(split_route[idx]) == 3:
@@ -406,36 +392,45 @@ class Webscrape:
                             point_plus = f"{split_route[idx+1]}  "
                         else:
                             point_plus = split_route[idx+1]
-                        file.write(
-                            f"{point} {point} {point_plus} {point_plus.rstrip()}\n")
+
+                        # Deal with any non-continuous sections of an airway
+                        if point == "NCS!":
+                            file.write(";non continuous section\n")
+                        elif point_plus == "NCS!":
+                            pass
+                        else:
+                            line_to_write = f"{point} {point} {point_plus} {point_plus.rstrip()}"
+                            if idx + 1 == route_len - 1:
+                                file.write(line_to_write)
+                            else:
+                                file.write(f"{line_to_write}\n")
 
         route_name = None
         vor_dme = {}
         nav_point = {}
         route_upper = None
         route_lower = None
-        upper_len = 0
-        lower_len = 0
+        last_point = None
         uplo = None
         point = None
+        upper_counter = 0
+        lower_counter = 0
+        point_counter = 0
         for index, row in df_enr_3.iterrows():
             # Only look at rows which have something in the 3rd column
             # This will filter out all the short rows which are of little value
             if pd.notna(row["coordinates_bearing"]):
                 if row["route"] == row["name"] and re.match(r"^[A-Z]{1,2}\d{1,3}$", row["name"]):
                     # Check to see if this is a route name
-                    logger.debug(f'{row["name"]} {index}')
+                    logger.debug(f'{row["name"]} (Index: {index})')
                     route_name = row["name"]
-                    route_upper = f"{row['name']}"
-                    route_lower = f"{row['name']}"
+                    route_upper = route_name
+                    route_lower = route_name
                 elif row["route"] == "∆" or (not pd.notna(row["route"]) and row["route"]):
                     # Check to see if this is a significant point
-                    coordinates = re.match(
-                        r"^(\d{6}(\.\d{2})?[NS])(?:\s+)(\d{7}(\.\d{2})?[EW])$",
-                        row["coordinates_bearing"]
-                        )
+                    coordinates = self.regex.coordinates(row["coordinates_bearing"])
                     if coordinates:
-                        coord_group = f"{coordinates.group(1)} {coordinates.group(3)}"
+                        coord_group = f"{coordinates[1]} {coordinates[3]}"
                         vordmendb = re.match(
                             r"^([A-Z\s]+)\s\s([VORDMENB]{3}(\/[VORDMENB]{3})?)"
                             r"\s+\(\s+([A-Z]{3})\s+\)$",
@@ -449,135 +444,98 @@ class Webscrape:
                             # If it isn't VOR/DME/NDB then is must be a nav point
                             nav_point[row["name"]] = coord_group
                             point = row['name']
+
+                        if uplo == 0:
+                            # If the last route segment was flagged as an upper airway then...
+                            if upper_counter == point_counter:
+                                route_upper = f"{route_upper} {point}"
+                            else:
+                                route_upper = f"{route_upper} NCS! {last_point} {point}"
+                                upper_counter = point_counter
+                            upper_counter += 1
+                        elif uplo == 1:
+                            # If the last route segment was flagged as an lower airway then...
+                            logger.debug(f"Counters: {lower_counter} {point_counter}")
+                            if lower_counter == point_counter:
+                                route_lower = f"{route_lower} {point}"
+                            else:
+                                route_lower = f"{route_lower} NCS! {last_point} {point}"
+                                lower_counter = point_counter
+                            lower_counter += 1
+                        elif uplo == 2 or uplo is None:
+                            # If the last route segment was flagged as both airway types then...
+                            if upper_counter == point_counter:
+                                route_upper = f"{route_upper} {point}"
+                            else:
+                                route_upper = f"{route_upper} NCS! {last_point} {point}"
+                                upper_counter = point_counter
+
+                            if lower_counter == point_counter:
+                                route_lower = f"{route_lower} {point}"
+                            else:
+                                route_lower = f"{route_lower} NCS! {last_point} {point}"
+                                lower_counter = point_counter
+                            upper_counter += 1
+                            lower_counter += 1
+
                         logger.debug(f"{route_name} - {row['name']} - {coord_group}")
+                        point_counter += 1
+                        last_point = point
                     else:
                         raise ValueError(f"No coordinates match for {row['coordinates_bearing']}")
                 elif row["route"] == row["name"] and re.match(r"^\(.*\)$", row["name"]):
-                    vert_limits = re.findall(r"FL\s(\d{2,3})", row["vertical_limits"])
-                    # An airway is classed as upper if it operates >=FL250
+                    vert_limits = self.regex.flight_level(row["vertical_limits"])
                     if len(vert_limits) in [1,2]:
-                        upper_fl = vert_limits[0]
+                        upper_fl = str(vert_limits[0]).split(" ")[1]
                         if len(vert_limits) == 2:
-                            lower_fl = vert_limits[1]
+                            lower_fl = str(vert_limits[1]).split(" ")[1]
                         else:
                             lower_fl = 0
                         if (int(upper_fl) >= self.airway_split and
                             int(lower_fl) >= self.airway_split):
                             # Upper airway only
-                            route_upper = f"{route_upper} {point}"
+                            logger.debug("Upper airway only")
                             uplo = 0
                         elif (int(upper_fl) < self.airway_split and
                               int(lower_fl) < self.airway_split):
                             # Lower airway only
-                            route_lower = f"{route_lower} {point}"
+                            logger.debug("Lower airway only")
                             uplo = 1
                         else:
                             # Must be both upper and lower
-                            route_upper = f"{route_upper} {point}"
-                            route_lower = f"{route_lower} {point}"
+                            logger.debug("Both airways")
                             uplo = 2
                     else:
                         ve_text = f"Can't find upper and lower levels from {row['vertical_limits']}"
                         raise ValueError(ve_text)
-            elif row["route"] == row["name"] and not pd.notna(row["coordinates_bearing"]):
-                # Deal with entries that don't have any limits defined...
-                route_upper = f"{route_upper} {point}"
-                route_lower = f"{route_lower} {point}"
-
-        # Assign the final point to the correct route
-        upper_split = route_upper.split(" ")
-        lower_split = route_lower.split(" ")
-        upper_len = len(upper_split)
-        lower_len = len(lower_split)
-
-        if (upper_len > 1 and
-            lower_len > upper_len and
-            (upper_len + 1) <= lower_len and
-            lower_split[-1] not in route_upper
-            ):
-            route_upper = f"{route_upper} {lower_split[-1]}"
-        elif uplo == 0:
-            route_upper = f"{route_upper} {point}"
-
-        if (lower_len > 1 and
-            upper_len > lower_len and
-            (lower_len + 1) <= upper_len and
-            upper_split[-1] not in route_lower
-            ):
-            route_lower = f"{route_lower} {upper_split[-1]}"
-        elif uplo == 1:
-            route_lower = f"{route_lower} {point}"
-
-        if uplo == 2:
-            route_upper = f"{route_upper} {point}"
-            route_lower = f"{route_lower} {point}"
-
-        if uplo > 2 or uplo < 0:
-            raise ValueError(f"Unable to set last point - {point}")
-
+            elif re.match(r"^\(RNAV\)", row["route"]):
+                if uplo == 0:
+                    route_upper = f"{route_upper} NCS!"
+                elif uplo == 1:
+                    route_lower = f"{route_lower} NCS!"
+                elif uplo == 2:
+                    route_upper = f"{route_upper} NCS!"
+                    route_lower = f"{route_lower} NCS!"
         # Write the output to a file
-        if upper_len > 1:
+        if len(route_upper) > 1:
             write_to_file(route_upper, True)
-        if lower_len > 1:
+        if len(route_lower) > 1:
             write_to_file(route_lower, False)
 
         return [vor_dme, nav_point]
 
-    def process_enr_3(self, download_first:bool=True, no_build:bool=False) -> None:
-        """Process ENR 2 data"""
-
-        if download_first:
-            self.parse_enr_3_2()
-            self.parse_enr_3_3()
-
-        def run_process(file_name:str) -> list:
-            df_out = pd.read_csv(f"{functions.work_dir}\\DataFrames\\{file_name}")
-            search_results = self.search_enr_3_x(df_out)
-            return search_results
-
-        def convert_coords_dump_df(coord_in:dict, name:str) -> str:
-            for coord in coord_in.items():
-                # The coordinates need passing twice to work with the builder
-                # This is a 3rd party api limitation
-                xform = self.build.request_output(f"{coord[1]} {coord[1]}")
-                split_xform = xform.split(" ")
-                # Then we only need to return the first 2/4 results as they're duplicated
-                # This is an artifact from the api limitation already mentioned
-                coord_in[coord[0]] = f"{split_xform[0]} {split_xform[1]}"
-                logger.debug(f"{coord[0]} - {coord[1]} to {split_xform[0]} {split_xform[1]}")
-            # Save as a csv df
-            df_cc = pd.DataFrame.from_dict(coord_in, orient="index", columns=["lat/lon"])
-            df_cc = df_cc.reset_index()
-            df_cc.to_csv(f"{functions.work_dir}\\DataFrames\\{name}.csv")
-
-        vor_dme = {}
-        nav_aid = {}
-        file_names = self.generate_file_names("ENR-3")
-        for proc in file_names:
-            rpp = run_process(proc)
-            vor_dme.update(rpp[0])
-            nav_aid.update(rpp[1])
-
-        if no_build:
-            logger.warning("The 'no build' option has been set!")
-            print(vor_dme)
-            print(nav_aid)
-        else:
-            convert_coords_dump_df(vor_dme, "VOR_DME")
-            convert_coords_dump_df(nav_aid, "NAV_AID")
-
     def search_enr_4_1(self, df_enr_4:pd.DataFrame, no_build:bool=False) -> list:
-        """Generic ENR 4.1 search actions"""
+        """ENR 4.1 search actions"""
 
         # Start the iterator
         output = []
         for index, row in df_enr_4.iterrows():
-            name = re.match(r"^([A-Z\s\']+)\s\s([VORDME]{3}(\/[VORDME]{3})?)", row["name"])
+            logger.trace(index)
+            name = self.regex.vor_dme_ndb(row["name"])
             rid = re.match(r"^([A-Z]{3})$", row["id"])
-            freq = re.match(r"(\d{3}\.\d{3})\sMHz", row["frequency"])
-            tacan = re.match(r"(\d{2,3}[XY]{1})", row["frequency"])
-            coords = re.match(
-                r"^(\d{6}(\.\d{2})?[NS])(?:\s+)(\d{7}(\.\d{2})?[EW])$", row["coordinates"])
+            freq = self.regex.frequency(row["frequency"])
+            tacan = self.regex.tacan_channel(row["frequency"])
+            coords = self.regex.coordinates(row["coordinates"])
 
             # If there is match for everything on this record
             if name and rid and (freq or tacan) and coords:
@@ -607,29 +565,128 @@ class Webscrape:
                 elif freq:
                     freq_out = freq[1]
 
+                # Applying formatting to the returned frequency
+                freq_format = format(float(freq_out), '.3f')
+
                 # Output format is ID FREQ LAT LON ; Name
-                line = f"{rid[1]} {freq_out} {coord_out} ; {name[1].title()} {dme}"
+                # Ignore any NDB fixes for now
+                if name[2] != "NDB":
+                    line = f"{rid[1]} {freq_format} {coord_out} ; {name[1].title()} {dme}"
+                    output.append(line)
+                    logger.debug(line.rstrip())
+
+        return output
+
+    def search_enr_4_4(self, df_enr_4:pd.DataFrame, no_build:bool=False) -> list:
+        """ENR 4.4 search actions"""
+
+        # Start the iterator
+        output = []
+        for index, row in df_enr_4.iterrows():
+            logger.trace(index)
+            name = re.match(r"^([A-Z]{5})$", row["name"])
+            coords = self.regex.coordinates(row["coordinates"])
+
+            # If there is match for everything on this record
+            if name and coords:
+                if no_build:
+                    coord_out = row["coordinates"]
+                else:
+                    # Needs to be sent as double coords due to 3rd party limitations
+                    coord_xform = self.build.request_output(
+                        f'{row["coordinates"]} {row["coordinates"]}')
+                    xform_split = coord_xform.split(" ")
+                    coord_out = f"{xform_split[0]} {xform_split[1]}"
+
+                # Output format is ID FREQ LAT LON ; Name
+                line = f"{name[1]} {coord_out}"
                 output.append(line)
                 logger.debug(line.rstrip())
 
         return output
+
+    def process_enr_2(self, download_first:bool=True, no_build:bool=False) -> None:
+        """Process ENR 2 data"""
+
+        if download_first:
+            self.parse_enr_2_1()
+            self.parse_enr_2_2()
+
+        def run_process(file_name:str) -> None:
+            df_out_path = os.path.join(functions.work_dir, "DataFrames", f"{file_name}.csv")
+            df_out = pd.read_csv(df_out_path)
+            self.search_enr_2_x(df_out, file_name, no_build=no_build)
+
+        file_names = ["ENR-2.1_0","ENR-2.1_1","ENR-2.2_0","ENR-2.2_1","ENR-2.2_2"]
+        for proc in file_names:
+            run_process(proc)
+
+    def process_enr_3(self, download_first:bool=True, no_build:bool=False) -> None:
+        """Process ENR 2 data"""
+
+        if download_first:
+            self.parse_enr_3_2()
+            self.parse_enr_3_3()
+
+        def run_process(file_name:str) -> list:
+            df_out_path = os.path.join(functions.work_dir, "DataFrames", f"{file_name}")
+            df_out = pd.read_csv(df_out_path)
+            search_results = self.search_enr_3_x(df_out)
+            return search_results
+
+        def convert_coords_dump_df(coord_in:dict, name:str) -> str:
+            for coord in coord_in.items():
+                # The coordinates need passing twice to work with the builder
+                # This is a 3rd party api limitation
+                xform = self.build.request_output(f"{coord[1]} {coord[1]}")
+                split_xform = xform.split(" ")
+                # Then we only need to return the first 2/4 results as they're duplicated
+                # This is an artifact from the api limitation already mentioned
+                coord_in[coord[0]] = f"{split_xform[0]} {split_xform[1]}"
+                logger.debug(f"{coord[0]} - {coord[1]} to {split_xform[0]} {split_xform[1]}")
+            # Save as a csv df
+            df_cc = pd.DataFrame.from_dict(coord_in, orient="index", columns=["lat/lon"])
+            df_cc = df_cc.reset_index()
+            df_out_path = os.path.join(functions.work_dir, "DataFrames", f"{name}.csv")
+            df_cc.to_csv(df_out_path)
+
+        vor_dme = {}
+        nav_aid = {}
+        file_names = self.generate_file_names("ENR-3")
+        for proc in file_names:
+            rpp = run_process(proc)
+            vor_dme.update(rpp[0])
+            nav_aid.update(rpp[1])
+
+        if no_build:
+            logger.warning("The 'no build' option has been set!")
+            print(vor_dme)
+            print(nav_aid)
+        else:
+            convert_coords_dump_df(vor_dme, "VOR_DME")
+            convert_coords_dump_df(nav_aid, "NAV_AID")
 
     def process_enr_4(self, download_first:bool=True, no_build:bool=False) -> None:
         """Process ENR 2 data"""
 
         if download_first:
             self.parse_enr_4_1()
-        df_out = pd.read_csv(f"{functions.work_dir}\\DataFrames\\ENR-4.1.csv")
-        output = self.search_enr_4_1(df_out, no_build=no_build)
-        with open(f"{functions.work_dir}\\DataFrames\\VOR_UK.txt", "w", encoding="utf-8") as file:
-            for line in output:
-                file.write(f"{line}\n")
+            self.parse_enr_4_4()
 
-    @staticmethod
-    def generate_file_names(file_start:str, file_type:str="csv") -> list:
-        """Generates an incremental list of filenames"""
+        file_names = [
+            ("ENR-4.1.csv", "VOR_UK.txt", "1"),
+            ("ENR-4.4.csv", "FIXES_UK.txt", "4"),
+        ]
+        for file_in, file_out, sub_section in file_names:
+            df_out_path = os.path.join(functions.work_dir, "DataFrames", f"{file_in}")
+            df_out = pd.read_csv(df_out_path)
+            if sub_section == "1":
+                output = self.search_enr_4_1(df_out, no_build=no_build)
+            elif sub_section == "4":
+                output = self.search_enr_4_4(df_out, no_build=no_build)
 
-        path = f"{functions.work_dir}\\DataFrames\\"
-        enr_files = ([file for file in os.listdir(path) if
-                      file.startswith(file_start) and file.endswith(file_type)])
-        return enr_files
+            file_path = os.path.join(functions.work_dir, "DataFrames", file_out)
+            logger.debug(file_path)
+            with open(file_path, "w", encoding="utf-8") as file:
+                for line in output:
+                    file.write(f"{line}\n")

@@ -48,7 +48,7 @@ class Airac:
         else:
             number_of_days = number_of_cycles * self.cycle_days + 1
         current_cycle = self.base_date + timedelta(days=number_of_days)
-        logger.debug("Current AIRAC Cycle is: {}", current_cycle)
+        logger.info("The selected AIRAC cycle date is: {}", current_cycle)
 
         return current_cycle
 
