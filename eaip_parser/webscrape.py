@@ -68,12 +68,12 @@ class Webscrape:
         self.build = builder.KiloJuliett()
         # Use default settings
         self.build.settings()
-
+        # Set the data
         self.date_in = date_in
-
         # Setup Tacan to VOR/ILS conversion
         self.tacan_vor = functions.TacanVor()
-
+        # Prepare regex searches
+        self.regex = lists.Regex()
         # Define at which FL an airway should be marked as 'uppper'
         self.airway_split = 245
 
@@ -161,15 +161,8 @@ class Webscrape:
         # The data object table[1] is for CTR
         ctr = tables[1]
         # Modify header row
-        column_headers = [
-            "data",
-            "unit",
-            "callsign",
-            "frequency",
-            "remarks",
-        ]
-        fir_uir_tma_cta.columns = column_headers
-        ctr.columns = column_headers
+        fir_uir_tma_cta.columns = lists.column_headers_airspace
+        ctr.columns = lists.column_headers_airspace
 
         return [fir_uir_tma_cta, ctr]
 
@@ -185,26 +178,15 @@ class Webscrape:
         cia = tables[28]
 
         # Modify header rows
-        atz_column_headers = [
-            "data",
-            "unit",
-            "callsign",
-            "frequency",
-            "remarks",
-        ]
-        fra_column_headers = [
+        column_headers = [
             "lateral_limits",
             "vertical_limits",
             "remarks"
         ]
-        cia_column_headers = [
-            "vertical_limits",
-            "lateral_limits",
-            "remarks"
-        ]
-        atz.columns = atz_column_headers
-        fra.columns = fra_column_headers
-        cia.columns = cia_column_headers
+
+        atz.columns = lists.column_headers_airspace
+        fra.columns = column_headers
+        cia.columns = column_headers
 
         return [atz, fra, cia]
 
@@ -214,20 +196,9 @@ class Webscrape:
 
         logger.debug(f"Found {len(tables)} ENR-3.2 tables")
         table_out = []
-        column_headers = [
-            "route",
-            "name",
-            "coordinates_bearing",
-            "distance",
-            "vertical_limits",
-            "ifr_limits_even",
-            "ifr_limits_odd",
-            "del1",
-            "del2",
-            "del3",
-        ]
+
         for table in tables:
-            table.columns = column_headers
+            table.columns = lists.column_headers_route
             table.drop(["del1","del2","del3"], axis=1)
             table_out.append(table)
 
@@ -239,20 +210,9 @@ class Webscrape:
 
         logger.debug(f"Found {len(tables)} ENR-3.3 tables")
         table_out = []
-        column_headers = [
-            "route",
-            "name",
-            "coordinates_bearing",
-            "distance",
-            "vertical_limits",
-            "ifr_limits_even",
-            "ifr_limits_odd",
-            "del1",
-            "del2",
-            "del3",
-        ]
+
         for table in tables:
-            table.columns = column_headers
+            table.columns = lists.column_headers_route
             table.drop(["del1","del2","del3"], axis=1)
             table_out.append(table)
 
@@ -294,13 +254,11 @@ class Webscrape:
         for index, row in df_enr_2.iterrows():
             if file_name == "ENR-2.2_1":
                 # Special case for UK Free Route Airspace
-                lat_lim = re.match(
-                    r"^([A-Z0-9\s]+)(\s\d{6}(\.\d{2})?[NS]{1}.*)", row["lateral_limits"]
-                    )
+                lat_lim = self.regex.lateral_limits(row["lateral_limits"])
                 logger.debug(str(lat_lim[2]).lstrip())
                 areas[lat_lim[1]] = str(lat_lim[2]).lstrip()
 
-                ver_lim = re.findall(r"(FL\s\d{1,3})", row["vertical_limits"])
+                ver_lim = self.regex.flight_level(row["vertical_limits"])
                 limit_text = f"UK Free Route Airspace from {ver_lim[0]} to {ver_lim[1]}"
                 logger.debug(limit_text)
                 limits_class[lat_lim[1]] = limit_text
@@ -338,7 +296,7 @@ class Webscrape:
                     # Cleanup the callsign
                     callsign = re.match(r"^([A-Z\s]+)(?:\s+[A-Z]{1}[a-z]+)", str(row['callsign']))
                     # Cleanup the frequency
-                    frequency = re.match(r"(\d{3}\.\d{3})", str(row["frequency"]))
+                    frequency = self.regex.frequency(row["frequency"])
                     if frequency:
                         check_25khz = functions.is_25khz(frequency[1])
                         if check_25khz:
@@ -444,12 +402,9 @@ class Webscrape:
                     route_lower = route_name
                 elif row["route"] == "∆" or (not pd.notna(row["route"]) and row["route"]):
                     # Check to see if this is a significant point
-                    coordinates = re.match(
-                        r"^(\d{6}(\.\d{2})?[NS])(?:\s+)(\d{7}(\.\d{2})?[EW])$",
-                        row["coordinates_bearing"]
-                        )
+                    coordinates = self.regex.coordinates(row["coordinates_bearing"])
                     if coordinates:
-                        coord_group = f"{coordinates.group(1)} {coordinates.group(3)}"
+                        coord_group = f"{coordinates[1]} {coordinates[3]}"
                         vordmendb = re.match(
                             r"^([A-Z\s]+)\s\s([VORDMENB]{3}(\/[VORDMENB]{3})?)"
                             r"\s+\(\s+([A-Z]{3})\s+\)$",
@@ -503,12 +458,11 @@ class Webscrape:
                     else:
                         raise ValueError(f"No coordinates match for {row['coordinates_bearing']}")
                 elif row["route"] == row["name"] and re.match(r"^\(.*\)$", row["name"]):
-                    vert_limits = re.findall(r"FL\s(\d{2,3})", row["vertical_limits"])
-                    logger.debug(row["vertical_limits"])
+                    vert_limits = self.regex.flight_level(row["vertical_limits"])
                     if len(vert_limits) in [1,2]:
-                        upper_fl = vert_limits[0]
+                        upper_fl = str(vert_limits[0]).split(" ")[1]
                         if len(vert_limits) == 2:
-                            lower_fl = vert_limits[1]
+                            lower_fl = str(vert_limits[1]).split(" ")[1]
                         else:
                             lower_fl = 0
                         if (int(upper_fl) >= self.airway_split and
@@ -543,12 +497,12 @@ class Webscrape:
         # Start the iterator
         output = []
         for index, row in df_enr_4.iterrows():
-            name = re.match(r"^([A-Z\s\']+)\s\s([VORDME]{3}(\/[VORDME]{3})?)", row["name"])
+            logger.trace(index)
+            name = self.regex.vor_dme_ndb(row["name"])
             rid = re.match(r"^([A-Z]{3})$", row["id"])
-            freq = re.match(r"(\d{3}\.\d{3})\sMHz", row["frequency"])
-            tacan = re.match(r"(\d{2,3}[XY]{1})", row["frequency"])
-            coords = re.match(
-                r"^(\d{6}(\.\d{2})?[NS])(?:\s+)(\d{7}(\.\d{2})?[EW])$", row["coordinates"])
+            freq = self.regex.frequency(row["frequency"], anchor=True)
+            tacan = self.regex.tacan_channel(row["frequency"])
+            coords = self.regex.coordinates(row["coordinates"])
 
             # If there is match for everything on this record
             if name and rid and (freq or tacan) and coords:
