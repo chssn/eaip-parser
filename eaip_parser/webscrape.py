@@ -78,7 +78,7 @@ class Webscrape:
         self.tacan_vor = functions.TacanVor()
         # Prepare regex searches
         self.regex = lists.Regex()
-        # Define at which FL an airway should be marked as 'uppper'
+        # Define at which FL an airway should be marked as 'upper'
         self.airway_split = 245
 
     def run(self, download_first:bool=True, no_build:bool=False) -> None:
@@ -508,7 +508,14 @@ class Webscrape:
                     else:
                         ve_text = f"Can't find upper and lower levels from {row['vertical_limits']}"
                         raise ValueError(ve_text)
-
+            elif re.match(r"^\(RNAV\)", row["route"]):
+                if uplo == 0:
+                    route_upper = f"{route_upper} NCS!"
+                elif uplo == 1:
+                    route_lower = f"{route_lower} NCS!"
+                elif uplo == 2:
+                    route_upper = f"{route_upper} NCS!"
+                    route_lower = f"{route_lower} NCS!"
         # Write the output to a file
         if len(route_upper) > 1:
             write_to_file(route_upper, True)
