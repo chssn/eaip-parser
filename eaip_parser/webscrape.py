@@ -524,7 +524,7 @@ class Webscrape:
             logger.trace(index)
             name = self.regex.vor_dme_ndb(row["name"])
             rid = re.match(r"^([A-Z]{3})$", row["id"])
-            freq = self.regex.frequency(row["frequency"], anchor=True)
+            freq = self.regex.frequency(row["frequency"])
             tacan = self.regex.tacan_channel(row["frequency"])
             coords = self.regex.coordinates(row["coordinates"])
 
@@ -560,9 +560,11 @@ class Webscrape:
                 freq_format = format(float(freq_out), '.3f')
 
                 # Output format is ID FREQ LAT LON ; Name
-                line = f"{rid[1]} {freq_format} {coord_out} ; {name[1].title()} {dme}"
-                output.append(line)
-                logger.debug(line.rstrip())
+                # Ignore any NDB fixes for now
+                if name[2] != "NDB":
+                    line = f"{rid[1]} {freq_format} {coord_out} ; {name[1].title()} {dme}"
+                    output.append(line)
+                    logger.debug(line.rstrip())
 
         return output
 
