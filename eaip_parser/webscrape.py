@@ -88,6 +88,7 @@ class Webscrape:
         self.process_enr_2(download_first=download_first, no_build=no_build)
         self.process_enr_3(download_first=download_first, no_build=no_build)
         self.process_enr_4(download_first=download_first, no_build=no_build)
+        self.process_enr_5(download_first=download_first, no_build=no_build)
 
     def url_suffix(self, section:str) -> str:
         """Returns a url suffix formatted for the European eAIP standard"""
@@ -266,6 +267,58 @@ class Webscrape:
         tdf.reset_index(drop=True, inplace=True)
 
         return tdf
+
+    @parse_table("ENR-5.1")
+    def parse_enr_5_1(self, tables:list=None) -> pd.DataFrame:
+        """Pull data from ENR 5.1 - PROHIBITED, RESTRICTED AND DANGER AREAS"""
+
+        # The data object is table[0]
+        nwt = tables[0]
+
+        # Modify header row
+        nwt.columns = lists.column_headers_nav_warn
+
+        # Name the columns to keep
+        nwt = nwt[["area"]]
+
+        return nwt
+
+    @parse_table("ENR-5.2")
+    def parse_enr_5_2(self, tables:list=None) -> pd.DataFrame:
+        """Pull data from ENR 5.1 - PROHIBITED, RESTRICTED AND DANGER AREAS"""
+
+        # The data object is table[0]
+        nwt = tables[0]
+
+        # Modify header row
+        nwt.columns = lists.column_headers_nav_warn
+
+        # Name the columns to keep
+        nwt = nwt[["area"]]
+
+        return nwt
+
+    @parse_table("ENR-5.3")
+    def parse_enr_5_3(self, tables:list=None) -> pd.DataFrame:
+        """Pull data from ENR 5.1 - PROHIBITED, RESTRICTED AND DANGER AREAS"""
+
+        # The data object is table[1] - table[0] relates exclusively to small arms ranges with an
+        # upper limit of 500ft
+        nwt = tables[1]
+
+        # Modify header row
+        nwt.columns = [
+            "area",
+            "vert_limits",
+            "advisory",
+            "authority",
+            "remarks",
+        ]
+
+        # Name the columns to keep
+        nwt = nwt[["area"]]
+
+        return nwt
 
     def search_enr_2_x(self, df_enr_2:pd.DataFrame, file_name:str, no_build:bool=False):
         """Generic ENR 2 search actions"""
@@ -605,9 +658,74 @@ class Webscrape:
 
         return output
 
+    def search_enr_5_x(self, df_enr_5:pd.DataFrame, file_name:str, no_build:bool=False) -> list:
+        """ENR 5.1 search actions"""
+
+        # Start the iterator
+        for index, row in df_enr_5.iterrows():
+            logger.trace(index)
+            # Search for relevant data
+            if file_name == "ENR-5.1":
+                data = re.match(
+                    r"(EG\s[DPR]{1}\d{1,4})(.*)(?<=\s\s)"
+                    r"((\d{6}[NS]{1}\s\d{7}[EW]{1}.*)|(\bA\scircle\b.*))", row["area"])
+                if data:
+                    eid = data[1]
+                    name = str(data[2]).strip()
+                    coords = data[3]
+            elif file_name == "ENR-5.2":
+                data = re.match(
+                    r"(.*)(?<=\s\s)((\d{6}[NS]{1}\s\d{7}[EW]{1}.*)|(\bA\scircle\b.*))", row["area"])
+                if data:
+                    eid = f"META {str(index).zfill(3)}"
+                    name = str(data[1]).strip()
+                    coords = data[2]
+            elif file_name == "ENR-5.3":
+                data = re.match(
+                    r"(.*)(?<=\s\s)((\d{6}[NS]{1}\s\d{7}[EW]{1}.*)|(\bA\scircle\b.*))", row["area"])
+                if data:
+                    eid = f"OADN {str(index).zfill(3)}"
+                    name = str(data[1]).strip()
+                    coords = data[2]
+
+                    # If a single coordinate is returned, the row can be filtered out as it is of
+                    # no use in the context of an sct file.
+                    if self.regex.coordinates(coords):
+                        continue
+                    # If a radius less than or equal to 1NM is returned then this can also be
+                    # filtered for the same reason.
+                    radius_check = re.match(r"(\d{1,2}(\.\d{1,3})?)(?=\sNM\sradius)", coords)
+                    if radius_check:
+                        if float(radius_check[1]) <= 1:
+                            continue
+
+            if data:
+                file_path = os.path.join(
+                    functions.work_dir,
+                    "DataFrames",
+                    f"{file_name}-{eid}.txt"
+                    )
+                with open(file_path, "w", encoding="utf-8") as file:
+                    # Request data
+                    if no_build:
+                        sct_data = f"The 'no build' option has been selected...\n{coords}"
+                    else:
+                        sct_data = self.build.request_output(coords)
+
+                    id_split = eid.split(" ", maxsplit=2)
+                    # Add comments into the sct output
+                    output = f";{id_split[0]}{id_split[1]} - {name}"
+                    file.write(output)
+                    # Add the returned coords
+                    coords_split = sct_data.split("\n")
+                    for crd in coords_split:
+                        output = f"\n{id_split[0]}{id_split[1]}\t{crd}"
+                        file.write(output)
+
     def process_enr_2(self, download_first:bool=True, no_build:bool=False) -> None:
         """Process ENR 2 data"""
 
+        logger.info("Processing ENR 2 data...")
         if download_first:
             self.parse_enr_2_1()
             self.parse_enr_2_2()
@@ -624,6 +742,7 @@ class Webscrape:
     def process_enr_3(self, download_first:bool=True, no_build:bool=False) -> None:
         """Process ENR 2 data"""
 
+        logger.info("Processing ENR 3 data...")
         if download_first:
             self.parse_enr_3_2()
             self.parse_enr_3_3()
@@ -669,6 +788,7 @@ class Webscrape:
     def process_enr_4(self, download_first:bool=True, no_build:bool=False) -> None:
         """Process ENR 2 data"""
 
+        logger.info("Processing ENR 4 data...")
         if download_first:
             self.parse_enr_4_1()
             self.parse_enr_4_4()
@@ -690,3 +810,21 @@ class Webscrape:
             with open(file_path, "w", encoding="utf-8") as file:
                 for line in output:
                     file.write(f"{line}\n")
+
+    def process_enr_5(self, download_first:bool=True, no_build:bool=False) -> None:
+        """Process ENR 5 data"""
+
+        logger.info("Processing ENR 5 data...")
+        if download_first:
+            self.parse_enr_5_1()
+            self.parse_enr_5_2()
+            self.parse_enr_5_3()
+
+        def run_process(file_name:str) -> None:
+            df_out_path = os.path.join(functions.work_dir, "DataFrames", f"{file_name}.csv")
+            df_out = pd.read_csv(df_out_path)
+            self.search_enr_5_x(df_out, file_name, no_build=no_build)
+
+        file_names = ["ENR-5.1", "ENR-5.2", "ENR-5.3"]
+        for proc in file_names:
+            run_process(proc)
