@@ -625,8 +625,11 @@ class Webscrape:
                 elif freq:
                     freq_out = freq[1]
 
+                # Applying formatting to the returned frequency
+                freq_format = format(float(freq_out), '.3f')
+
                 # Output format is ID FREQ LAT LON ; Name
-                line = f"{rid[1]} {freq_out} {coord_out} ; {name[1].title()} {dme}"
+                line = f"{rid[1]} {freq_format} {coord_out} ; {name[1].title()} {dme}"
                 output.append(line)
                 logger.debug(line.rstrip())
 
