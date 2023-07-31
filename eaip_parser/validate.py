@@ -132,10 +132,11 @@ class UkSectorFile:
         csf_rnav_lower = self.find_files_by_regex("(.+)", self.root_dir + "\\Airways\\RNAV\\Lower")
         csf_rnav_upper = self.find_files_by_regex("(.+)", self.root_dir + "\\Airways\\RNAV\\Upper")
         # Put all of the scraped airways into a list
+        file_path = os.path.join(functions.work_dir, "DataFrames")
         scraped_rnav_lower = self.find_files_by_regex(
-            "ENR-3.2-LOWER-(.*)", functions.work_dir + "\\DataFrames")
+            "ENR-3.2-LOWER-(.*)", file_path)
         scraped_rnav_upper = self.find_files_by_regex(
-            "ENR-3.2-UPPER-(.*)", functions.work_dir + "\\DataFrames")
+            "ENR-3.2-UPPER-(.*)", file_path)
 
         # Produce lists of matching and non-matching file names as a starter
         list_match_csf_lower = list_match(csf_rnav_lower[0], scraped_rnav_lower[0])

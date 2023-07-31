@@ -31,11 +31,17 @@ def parse_table(section:str, match:str=".+") -> None:
                 dataframe = func(self, tables, *args, **kwargs)
                 if isinstance(dataframe, pd.DataFrame):
                     # If a single dataframe is passed
-                    dataframe.to_csv(f"{functions.work_dir}\\DataFrames\\{section}.csv")
+                    df_path = os.path.join(functions.work_dir, "DataFrames", f"{section}.csv")
+                    dataframe.to_csv(df_path)
                 elif isinstance(dataframe, list):
                     # If a list of dataframes are passed
                     for idx, dfl in enumerate(dataframe):
-                        dfl.to_csv(f"{functions.work_dir}\\DataFrames\\{section}_{idx}.csv")
+                        dfl_path = os.path.join(
+                            functions.work_dir,
+                            "DataFrames",
+                            f"{section}_{idx}.csv"
+                            )
+                        dfl.to_csv(dfl_path)
                 else:
                     raise TypeError("No pandas dataframe or list was found")
             else:
@@ -104,7 +110,8 @@ class Webscrape:
             if self.debug:
                 # Outputs any found tables to csv files
                 for index, table in enumerate(tables):
-                    table.to_csv(f"{functions.work_dir}\\Debug\\{section}_{index}.csv")
+                    table_path = os.path.join(functions.work_dir, "Debug", f"{section}_{index}.csv")
+                    table.to_csv(table_path)
 
             # If there is a least one table
             if len(tables) > 0:
@@ -118,7 +125,7 @@ class Webscrape:
     def generate_file_names(file_start:str, file_type:str="csv") -> list:
         """Generates an incremental list of filenames"""
 
-        path = f"{functions.work_dir}\\DataFrames\\"
+        path = os.path.join(functions.work_dir, "DataFrames")
         enr_files = ([file for file in os.listdir(path) if
                       file.startswith(file_start) and file.endswith(file_type)])
         return enr_files
@@ -334,8 +341,8 @@ class Webscrape:
 
         output = ""
         last_title = None
-        with open(f"{functions.work_dir}\\DataFrames\\{file_name}_AIRSPACE.sct",
-            "w", encoding="utf-8") as file:
+        file_path = os.path.join(functions.work_dir, "DataFrames", f"{file_name}_AIRSPACE.sct")
+        with open(file_path, "w", encoding="utf-8") as file:
             for idx, loc in areas.items():
                 # Request data
                 if no_build:
@@ -377,8 +384,12 @@ class Webscrape:
             else:
                 uorl = "LOWER"
 
-            with open(f"{functions.work_dir}\\DataFrames\\ENR-3.2-{uorl}-{split_route[0]}.txt",
-                "w", encoding="utf-8") as file:
+            file_path = os.path.join(
+                functions.work_dir,
+                "DataFrames",
+                f"ENR-3.2-{uorl}-{split_route[0]}.txt"
+                )
+            with open(file_path, "w", encoding="utf-8") as file:
                 for idx in range(start, route_len-1, 1):
                     if (idx + 1) < route_len:
                         # If the point is only 3 characters, it needs padding with 2 extra spaces
@@ -604,7 +615,8 @@ class Webscrape:
             self.parse_enr_2_2()
 
         def run_process(file_name:str) -> None:
-            df_out = pd.read_csv(f"{functions.work_dir}\\DataFrames\\{file_name}.csv")
+            df_out_path = os.path.join(functions.work_dir, "DataFrames", f"{file_name}.csv")
+            df_out = pd.read_csv(df_out_path)
             self.search_enr_2_x(df_out, file_name, no_build=no_build)
 
         file_names = ["ENR-2.1_0","ENR-2.1_1","ENR-2.2_0","ENR-2.2_1","ENR-2.2_2"]
@@ -619,7 +631,8 @@ class Webscrape:
             self.parse_enr_3_3()
 
         def run_process(file_name:str) -> list:
-            df_out = pd.read_csv(f"{functions.work_dir}\\DataFrames\\{file_name}")
+            df_out_path = os.path.join(functions.work_dir, "DataFrames", f"{file_name}.csv")
+            df_out = pd.read_csv(df_out_path)
             search_results = self.search_enr_3_x(df_out)
             return search_results
 
@@ -636,7 +649,8 @@ class Webscrape:
             # Save as a csv df
             df_cc = pd.DataFrame.from_dict(coord_in, orient="index", columns=["lat/lon"])
             df_cc = df_cc.reset_index()
-            df_cc.to_csv(f"{functions.work_dir}\\DataFrames\\{name}.csv")
+            df_out_path = os.path.join(functions.work_dir, "DataFrames", f"{name}.csv")
+            df_cc.to_csv(df_out_path)
 
         vor_dme = {}
         nav_aid = {}
@@ -666,12 +680,15 @@ class Webscrape:
             ("ENR-4.4.csv", "FIXES_UK.txt", "4"),
         ]
         for file_in, file_out, sub_section in file_names:
-            df_out = pd.read_csv(f"{functions.work_dir}\\DataFrames\\{file_in}")
+            df_out_path = os.path.join(functions.work_dir, "DataFrames", f"{file_in}")
+            df_out = pd.read_csv(df_out_path)
             if sub_section == "1":
                 output = self.search_enr_4_1(df_out, no_build=no_build)
             elif sub_section == "4":
                 output = self.search_enr_4_4(df_out, no_build=no_build)
 
-            with open(f"{functions.work_dir}\\DataFrames\\{file_out}", "w", encoding="utf-8") as file:
+            file_path = os.path.join(functions.work_dir, "DataFrames", file_out)
+            logger.debug(file_path)
+            with open(file_path, "w", encoding="utf-8") as file:
                 for line in output:
                     file.write(f"{line}\n")
