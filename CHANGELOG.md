@@ -1,5 +1,29 @@
 <!--next-version-placeholder-->
 
+## v0.4.0 (2023-07-31)
+### Feature
+* Processing enr4.4 ([`1410e25`](https://github.com/chssn/eaip-parser/commit/1410e25ea269ffe8ce35e2aec685fdf2344ab3c3))
+
+### Fix
+* Not identifying non-continuous sections ([`9d88e33`](https://github.com/chssn/eaip-parser/commit/9d88e3343c8ef2596fe3d8d40bbdd0cba4bfb24e))
+* Added better error checking ([`7ffb23c`](https://github.com/chssn/eaip-parser/commit/7ffb23c9eac175f009ca8f93ba78df6459d79120))
+* File not found ([`102be50`](https://github.com/chssn/eaip-parser/commit/102be508ddce377098949f49f821649cee000d24))
+* File path not formatted correctly ([`851dfd5`](https://github.com/chssn/eaip-parser/commit/851dfd5eb425874ff481c7695fa1e81674b04237))
+* Only returning dme points ([`e2d076a`](https://github.com/chssn/eaip-parser/commit/e2d076aa7c12b6d57037a3d47a85484f5ef1f222))
+* Moved common regex strings ([`a8855f8`](https://github.com/chssn/eaip-parser/commit/a8855f82e82902ab3a10cd089f0e3bbe9d209fbd))
+* Frequency not formatting correctly ([`f4c6735`](https://github.com/chssn/eaip-parser/commit/f4c67355415bd6f0cbd650c0be0a144b36479c85))
+* Var ref before assigned ([`03e19a7`](https://github.com/chssn/eaip-parser/commit/03e19a7de44e5b3274c302dcb3e58515eff69dbb))
+* Adding non-continuous stmnt to first line ([`a677830`](https://github.com/chssn/eaip-parser/commit/a6778303866cf359b62f342b80a434686386efa6))
+* Not working correctly with non-cont airways ([`d7fbf55`](https://github.com/chssn/eaip-parser/commit/d7fbf55bc2af65332816e50713f03c7fab861397))
+* Reduced module verbosity ([`4030050`](https://github.com/chssn/eaip-parser/commit/40300504d57494fa27e82ba07a865767e0b32ab9))
+
+### Documentation
+* Corrected wording ([`d57535e`](https://github.com/chssn/eaip-parser/commit/d57535e88154ee756b97b339b1b88a1f0ef4912e))
+* Updated commenting ([`333c338`](https://github.com/chssn/eaip-parser/commit/333c338540a9b895c248f0136d1caa300ebb48a7))
+
+### Performance
+* Removed redundant function ([`31739dd`](https://github.com/chssn/eaip-parser/commit/31739ddc465f4198bbe23a1950b07eb1cb22d5ea))
+
 ## v0.3.0 (2023-07-30)
 ### Feature
 * Added ENR4.1 checks ([`312d81a`](https://github.com/chssn/eaip-parser/commit/312d81a51d22ec88de8ad839daef57acae2db8d1))
