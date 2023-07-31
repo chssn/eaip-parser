@@ -245,6 +245,30 @@ class Webscrape:
 
         return tdf
 
+    @parse_table("ENR-4.4")
+    def parse_enr_4_4(self, tables:list=None) -> pd.DataFrame:
+        """Process data from ENR 4.1 - RADIO NAVIGATION AIDS - EN-ROUTE"""
+
+        tdf = tables[0]
+
+        # Modify header row
+        column_headers = [
+            "name",
+            "coordinates",
+            "route",
+            "fra",
+            "remarks",
+        ]
+        tdf.columns = column_headers
+
+        # Name the columns to keep
+        tdf = tdf[["name", "coordinates"]]
+
+        # Reset the index
+        tdf.reset_index(drop=True, inplace=True)
+
+        return tdf
+
     def search_enr_2_x(self, df_enr_2:pd.DataFrame, file_name:str, no_build:bool=False):
         """Generic ENR 2 search actions"""
 
@@ -542,6 +566,34 @@ class Webscrape:
 
         return output
 
+    def search_enr_4_4(self, df_enr_4:pd.DataFrame, no_build:bool=False) -> list:
+        """ENR 4.4 search actions"""
+
+        # Start the iterator
+        output = []
+        for index, row in df_enr_4.iterrows():
+            logger.trace(index)
+            name = re.match(r"^([A-Z]{5})$", row["name"])
+            coords = self.regex.coordinates(row["coordinates"])
+
+            # If there is match for everything on this record
+            if name and coords:
+                if no_build:
+                    coord_out = row["coordinates"]
+                else:
+                    # Needs to be sent as double coords due to 3rd party limitations
+                    coord_xform = self.build.request_output(
+                        f'{row["coordinates"]} {row["coordinates"]}')
+                    xform_split = coord_xform.split(" ")
+                    coord_out = f"{xform_split[0]} {xform_split[1]}"
+
+                # Output format is ID FREQ LAT LON ; Name
+                line = f"{name[1]} {coord_out}"
+                output.append(line)
+                logger.debug(line.rstrip())
+
+        return output
+
     def process_enr_2(self, download_first:bool=True, no_build:bool=False) -> None:
         """Process ENR 2 data"""
 
@@ -605,8 +657,19 @@ class Webscrape:
 
         if download_first:
             self.parse_enr_4_1()
-        df_out = pd.read_csv(f"{functions.work_dir}\\DataFrames\\ENR-4.1.csv")
-        output = self.search_enr_4_1(df_out, no_build=no_build)
-        with open(f"{functions.work_dir}\\DataFrames\\VOR_UK.txt", "w", encoding="utf-8") as file:
-            for line in output:
-                file.write(f"{line}\n")
+            self.parse_enr_4_4()
+
+        file_names = [
+            ("ENR-4.1.csv", "VOR_UK.txt", "1"),
+            ("ENR-4.4.csv", "FIXES_UK.txt", "4"),
+        ]
+        for file_in, file_out, sub_section in file_names:
+            df_out = pd.read_csv(f"{functions.work_dir}\\DataFrames\\{file_in}")
+            if sub_section == "1":
+                output = self.search_enr_4_1(df_out, no_build=no_build)
+            elif sub_section == "4":
+                output = self.search_enr_4_4(df_out, no_build=no_build)
+
+            with open(f"{functions.work_dir}\\DataFrames\\{file_out}", "w", encoding="utf-8") as file:
+                for line in output:
+                    file.write(f"{line}\n")
