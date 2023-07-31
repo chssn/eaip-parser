@@ -30,8 +30,10 @@ def parse_table(section:str, match:str=".+") -> None:
             if tables:
                 dataframe = func(self, tables, *args, **kwargs)
                 if isinstance(dataframe, pd.DataFrame):
+                    # If a single dataframe is passed
                     dataframe.to_csv(f"{functions.work_dir}\\DataFrames\\{section}.csv")
                 elif isinstance(dataframe, list):
+                    # If a list of dataframes are passed
                     for idx, dfl in enumerate(dataframe):
                         dfl.to_csv(f"{functions.work_dir}\\DataFrames\\{section}_{idx}.csv")
                 else:
@@ -413,6 +415,7 @@ class Webscrape:
                         else:
                             point_plus = split_route[idx+1]
 
+                        # Deal with any non-continuous sections of an airway
                         if point == "NCS!":
                             file.write(";non continuous section\n")
                         elif point_plus == "NCS!":
@@ -508,7 +511,6 @@ class Webscrape:
                 elif row["route"] == row["name"] and re.match(r"^\(.*\)$", row["name"]):
                     vert_limits = re.findall(r"FL\s(\d{2,3})", row["vertical_limits"])
                     logger.debug(row["vertical_limits"])
-                    # An airway is classed as upper if it operates >=FL250
                     if len(vert_limits) in [1,2]:
                         upper_fl = vert_limits[0]
                         if len(vert_limits) == 2:
@@ -585,7 +587,7 @@ class Webscrape:
             convert_coords_dump_df(nav_aid, "NAV_AID")
 
     def search_enr_4_1(self, df_enr_4:pd.DataFrame, no_build:bool=False) -> list:
-        """Generic ENR 4.1 search actions"""
+        """ENR 4.1 search actions"""
 
         # Start the iterator
         output = []
