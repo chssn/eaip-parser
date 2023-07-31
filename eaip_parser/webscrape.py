@@ -622,7 +622,7 @@ class Webscrape:
             self.parse_enr_3_3()
 
         def run_process(file_name:str) -> list:
-            df_out_path = os.path.join(functions.work_dir, "DataFrames", f"{file_name}.csv")
+            df_out_path = os.path.join(functions.work_dir, "DataFrames", f"{file_name}")
             df_out = pd.read_csv(df_out_path)
             search_results = self.search_enr_3_x(df_out)
             return search_results
