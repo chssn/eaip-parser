@@ -7,10 +7,12 @@ Chris Parkinson (@chssn)
 
 # Standard Libraries
 import filecmp
+import os
 
 # Third Party Libraries
 import pandas as pd
 import pytest
+from loguru import logger
 from unittest.mock import MagicMock, patch
 
 # Local Libraries
@@ -122,6 +124,52 @@ def test_search_enr_3_x():
         assert filecmp.cmp(
             f"tests\\test_data\\{file_out}",
             f"eaip_parser\\DataFrames\\{file_out}", shallow=False) is True
+
+def test_process_enr_4():
+    """process_enr_4"""
+
+    webscrapi = Webscrape()
+    file_names = [
+        "FIXES_UK.txt",
+        "VOR_UK.txt",
+        ]
+    webscrapi.process_enr_4(download_first=False, no_build=True)
+    for file_out in file_names:
+        logger.debug(f"Testing {file_out}")
+        filecmp.clear_cache()
+        assert filecmp.cmp(
+            f"tests\\test_data\\{file_out}",
+            f"eaip_parser\\DataFrames\\{file_out}", shallow=False) is True
+
+def test_generate_file_names():
+    # Test case 1: Test with matching filenames
+    file_start = "test_file"
+    expected_files = ["test_file_1.csv", "test_file_2.csv", "test_file_3.csv"]
+    create_test_files(expected_files)
+    result = Webscrape.generate_file_names(file_start)
+    assert result == expected_files
+
+    # Test case 2: Test with non-matching filenames
+    file_start = "non_matching"
+    expected_files = []
+    create_test_files(["other_file_1.csv", "other_file_2.csv"])
+    result = Webscrape.generate_file_names(file_start)
+    assert result == expected_files
+
+    # Test case 3: Test with a different file type
+    file_start = "test_file"
+    expected_files = ["test_file_1.json", "test_file_2.json"]
+    create_test_files(expected_files)
+    result = Webscrape.generate_file_names(file_start, file_type="json")
+    assert result == expected_files
+
+def create_test_files(files):
+    # Helper function to create test files in the 'DataFrames' folder
+    path = os.path.join(functions.work_dir, "DataFrames")
+    os.makedirs(path, exist_ok=True)
+    for filename in files:
+        full_path = os.path.join(path, filename)
+        open(full_path, "w").close()
 
 
 class TestGetTableMethod:
