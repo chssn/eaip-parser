@@ -57,11 +57,9 @@ class Webscrape:
             next_cycle:bool=True,
             country_code:str="EG",
             date_in=0,
-            debug:bool=False
             ) -> None:
         airac_cycle = airac.Airac()
         self.cycle_url = airac_cycle.url(next_cycle=next_cycle, date_in=date_in)
-        self.debug = debug
 
         # Validate the entry for country_code
         if re.match(r"^[A-Z]{2}$", country_code.upper()):
@@ -105,13 +103,6 @@ class Webscrape:
         try:
             # Read the full address into a list of dataframes
             tables = pd.read_html(address, flavor="bs4", match=match)
-
-            # Debug functions
-            if self.debug:
-                # Outputs any found tables to csv files
-                for index, table in enumerate(tables):
-                    table_path = os.path.join(functions.work_dir, "Debug", f"{section}_{index}.csv")
-                    table.to_csv(table_path)
 
             # If there is a least one table
             if len(tables) > 0:
