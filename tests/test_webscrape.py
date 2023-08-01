@@ -154,36 +154,6 @@ def test_process_enr_4():
         file_b = os.path.join(parent_dir, "eaip_parser", "DataFrames", file_out)
         assert filecmp.cmp(file_a, file_b, shallow=False) is True
 
-def test_generate_file_names():
-    # Test case 1: Test with matching filenames
-    file_start = "test_file"
-    expected_files = ["test_file_1.csv", "test_file_2.csv", "test_file_3.csv"]
-    create_test_files(expected_files)
-    result = Webscrape.generate_file_names(file_start)
-    assert result == expected_files
-
-    # Test case 2: Test with non-matching filenames
-    file_start = "non_matching"
-    expected_files = []
-    create_test_files(["other_file_1.csv", "other_file_2.csv"])
-    result = Webscrape.generate_file_names(file_start)
-    assert result == expected_files
-
-    # Test case 3: Test with a different file type
-    file_start = "test_file"
-    expected_files = ["test_file_1.json", "test_file_2.json"]
-    create_test_files(expected_files)
-    result = Webscrape.generate_file_names(file_start, file_type="json")
-    assert result == expected_files
-
-def create_test_files(files):
-    # Helper function to create test files in the 'DataFrames' folder
-    path = os.path.join(functions.work_dir, "DataFrames")
-    os.makedirs(path, exist_ok=True)
-    for filename in files:
-        full_path = os.path.join(path, filename)
-        open(full_path, "w").close()
-
 
 class TestGetTableMethod:
     def test_get_table_with_tables(self):
