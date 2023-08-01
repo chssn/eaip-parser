@@ -30,7 +30,6 @@ def main() -> None:
     # Run the validator
     validator = validate.UkSectorFile()
     validator.airways_rnav()
-    validator.vor_dme_tacan()
 
 if __name__ == "__main__":
     main()
