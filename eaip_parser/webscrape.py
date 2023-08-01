@@ -667,12 +667,12 @@ class Webscrape:
             # Search for relevant data
             if file_name == "ENR-5.1":
                 data = re.match(
-                    r"(EG\s[DPR]{1}\d{1,4})(.*)(?<=\s\s)"
+                    r"(EG\s[DPR]{1}\d{1,4}([A-Z]{1})?)(.*)(?<=\s\s)"
                     r"((\d{6}[NS]{1}\s\d{7}[EW]{1}.*)|(\bA\scircle\b.*))", row["area"])
                 if data:
                     eid = data[1]
-                    name = str(data[2]).strip()
-                    coords = data[3]
+                    name = str(data[3]).strip()
+                    coords = data[4]
             elif file_name == "ENR-5.2":
                 data = re.match(
                     r"(.*)(?<=\s\s)((\d{6}[NS]{1}\s\d{7}[EW]{1}.*)|(\bA\scircle\b.*))", row["area"])
