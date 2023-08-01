@@ -2,7 +2,8 @@
 
 
 
-## Unreleased
+
+## v0.4.1 (2023-08-01)
 
 ### Build
 
@@ -18,12 +19,31 @@
 
 ### Ci
 
+* ci: added pylint and pytest ([`e543ac8`](https://github.com/chssn/eaip-parser/commit/e543ac81d71257423b9938029abb4f4b235b7481))
+
+* ci: updates to workflow ([`fc0a787`](https://github.com/chssn/eaip-parser/commit/fc0a787717c755a791ff34d4ee8d8d09956abdc4))
+
 * ci: semantic release config update ([`18e70b3`](https://github.com/chssn/eaip-parser/commit/18e70b3e67de4859112c38d20fd06e86b858d57b))
 
+### Fix
 
+* fix: deleted errored call ([`a7657d6`](https://github.com/chssn/eaip-parser/commit/a7657d630c56c05391b605ae1418fb3111c5f5c6))
 
+### Refactor
 
+* refactor: extensive lint ([`66d836b`](https://github.com/chssn/eaip-parser/commit/66d836b25959b24e081b9477dce4cd2926c594a7))
 
+### Test
+
+* test: rewrote enr4 test ([`9ca09cc`](https://github.com/chssn/eaip-parser/commit/9ca09ccd05578dcb304189833e640bd55c74189b))
+
+* test: remove test files ([`f6537e9`](https://github.com/chssn/eaip-parser/commit/f6537e9d62b35c45bceb90b62ef5610ef94a752c))
+
+* test: include the working directory this time ([`dafddc4`](https://github.com/chssn/eaip-parser/commit/dafddc4adef3fe51fa25998eeb0b6facdcde128a))
+
+* test: update to be platform agnostic ([`5fcf8ba`](https://github.com/chssn/eaip-parser/commit/5fcf8ba0edff43f7206debe644e5e687ee60903f))
+
+* test: updated test followin lint ([`0c46803`](https://github.com/chssn/eaip-parser/commit/0c4680323585a5c2cbc44f28a0a07c39c4eab1d2))
 
 ## v0.4.0 (2023-07-31)
 
