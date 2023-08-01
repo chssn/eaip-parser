@@ -143,11 +143,23 @@ def test_process_enr_4():
 
     webscrapi = ProcessData()
     file_names = [
-        "FIXES_UK.txt",
-        "VOR_UK.txt",
-        ]
-    webscrapi.process_enr_4(no_build=True)
-    for file_out in file_names:
+        ("ENR-4.1.csv", "VOR_UK.txt", "1"),
+        ("ENR-4.4.csv", "FIXES_UK.txt", "4"),
+    ]
+    for file_in, file_out, sub_section in file_names:
+        df_out_path = os.path.join(work_dir, "test_data", f"{file_in}")
+        df_out = pd.read_csv(df_out_path)
+        if sub_section == "1":
+            output = webscrapi.search_enr_4_1(df_out, no_build=True)
+        elif sub_section == "4":
+            output = webscrapi.search_enr_4_4(df_out, no_build=True)
+
+        file_path = os.path.join(functions.work_dir, "DataFrames", file_out)
+        logger.debug(file_path)
+        with open(file_path, "w", encoding="utf-8") as file:
+            for line in output:
+                file.write(f"{line}\n")
+
         logger.debug(f"Testing {file_out}")
         filecmp.clear_cache()
         file_a = os.path.join(work_dir, "test_data", file_out)
