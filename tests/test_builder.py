@@ -13,12 +13,12 @@ import requests
 from loguru import logger
 
 # Local Libraries
-from eaip_parser.builder import KiloJuliett
+from eaip_parser.builder import KiloJuliett, BuildSettings, ArcSettings
 
 def test_init():
     """__init__"""
     kj_test = KiloJuliett()
-    assert kj_test.request_settings == {}
+    assert not kj_test.request_settings
     assert kj_test.base_url == "https://kilojuliett.ch:443/webtools/geo/json"
 
     kj_test = KiloJuliett(base_url="402356895uy089wgja[n[arg]]")
@@ -71,17 +71,20 @@ def test_settings():
         expected_result
         ) in test_cases:
         kj_test = KiloJuliett()
-        kj_test.settings(
-            elnp=elnp,
-            wpt=wpt,
-            dupe=dupe,
-            xchglatlon=xchglatlon,
-            title=title,
-            arctype=arctype,
-            arcres=arcres,
-            polynl=polynl,
-            output_format=output_format,
+        kj_test_settings = BuildSettings(
+            elnp,
+            wpt,
+            dupe,
+            xchglatlon,
+            title,
+            output_format
         )
+        kj_test_arc_settings = ArcSettings(
+            arctype,
+            arcres,
+            polynl,
+        )
+        kj_test.settings(build_settings=kj_test_settings, arc_settings=kj_test_arc_settings)
         logger.debug(kj_test.request_settings)
         logger.debug(expected_result)
         assert kj_test.request_settings == expected_result
@@ -103,17 +106,17 @@ def test_settings():
     assert kj_test.request_settings == default
 
     with pytest.raises(ValueError):
-        kj_test.settings(arctype=2)
+        kj_test.settings(arc_settings=ArcSettings(arctype=2))
     with pytest.raises(ValueError):
-        kj_test.settings(arcres=-2)
+        kj_test.settings(arc_settings=ArcSettings(arcres=-2))
     with pytest.raises(ValueError):
-        kj_test.settings(arcres=181)
+        kj_test.settings(arc_settings=ArcSettings(arcres=181))
     with pytest.raises(ValueError):
-        kj_test.settings(polynl=-2)
+        kj_test.settings(arc_settings=ArcSettings(polynl=-2))
     with pytest.raises(ValueError):
-        kj_test.settings(polynl=11)
+        kj_test.settings(arc_settings=ArcSettings(polynl=11))
     with pytest.raises(ValueError):
-        kj_test.settings(output_format="ABC")
+        kj_test.settings(build_settings=BuildSettings(output_format="ABC"))
 
 def test_data_input_validator():
     """data_input_validator"""

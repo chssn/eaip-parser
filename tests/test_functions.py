@@ -203,8 +203,8 @@ def test_git_not_installed(mocker):
 def test_install_git(mocker, exit_code, expected_result):
     """install_git"""
     # Mock subprocess.Popen to simulate the PowerShell command
-    mocker.patch("subprocess.Popen")
-    process_instance = subprocess.Popen.return_value
+    mocker.patch("subprocess.run")
+    process_instance = subprocess.run.return_value
     process_instance.returncode = exit_code
 
     # Call the install_git function

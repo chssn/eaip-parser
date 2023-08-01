@@ -18,7 +18,7 @@ from unittest.mock import MagicMock, patch
 # Local Libraries
 import tests.standard_test_cases as stc
 from eaip_parser import functions, lists
-from eaip_parser.webscrape import Webscrape
+from eaip_parser.webscrape import Webscrape, ProcessData
 
 def test_init_country():
     """__init__"""
@@ -94,7 +94,7 @@ def test_url_suffix():
 def test_search_enr_2_x():
     """search_enr_2_x"""
 
-    webscrapi = Webscrape()
+    webscrapi = ProcessData()
     file_names = ["ENR-2.1_0","ENR-2.1_1", "ENR-2.2_0", "ENR-2.2_1", "ENR-2.2_2"]
     for proc in file_names:
         df_out = pd.read_csv(f"tests\\test_data\\{proc}.csv")
@@ -108,7 +108,7 @@ def test_search_enr_2_x():
 def test_search_enr_3_x():
     """search_enr_3_x"""
 
-    webscrapi = Webscrape()
+    webscrapi = ProcessData()
     file_names = [
         ("ENR-3.2_151.csv", "ENR-3.2-UPPER-Q63.txt"),
         ("ENR-3.2_67.csv", "ENR-3.2-LOWER-N16.txt"),
@@ -120,6 +120,7 @@ def test_search_enr_3_x():
         df_out = pd.read_csv(f"tests\\test_data\\{file_in}")
         # The function being tested
         webscrapi.search_enr_3_x(df_out)
+        logger.debug(f"Testing {file_out}")
         filecmp.clear_cache()
         assert filecmp.cmp(
             f"tests\\test_data\\{file_out}",
@@ -128,12 +129,12 @@ def test_search_enr_3_x():
 def test_process_enr_4():
     """process_enr_4"""
 
-    webscrapi = Webscrape()
+    webscrapi = ProcessData()
     file_names = [
         "FIXES_UK.txt",
         "VOR_UK.txt",
         ]
-    webscrapi.process_enr_4(download_first=False, no_build=True)
+    webscrapi.process_enr_4(no_build=True)
     for file_out in file_names:
         logger.debug(f"Testing {file_out}")
         filecmp.clear_cache()
