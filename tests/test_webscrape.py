@@ -91,15 +91,51 @@ def test_init_date_in():
 
 def test_url_suffix():
     """url_suffix"""
-    sections = [
-        "AD-1.4",
-        "wgobna3489au tafgh[WN]",
-        1234
-    ]
     webscrapi = Webscrape()
+
+    sections = [
+        "GEN-0.0",
+        "GEN-0.1",
+        "GEN-6.9",
+        "ENR-0.0",
+        "ENR-0.1",
+        "ENR-6.99",
+        "AD-0.0",
+        "AD-0.1",
+        "AD-6.9",
+        "AD-2.EGPD",
+        "AD-3.EGBC",
+        "AD-2.AAAA",
+        "AD-3.ZZZZ",
+    ]
     for section in sections:
         wso = webscrapi.url_suffix(section)
         assert wso == str(f"EG-{section}-en-GB.html")
+
+    bad_sections = [
+        "GNE-0.0",
+        "EGN-0.0",
+        "ENG-0.0",
+        "NEG-0.0",
+        "NGA-0.0",
+        "ERN-0.0",
+        "NER-0.0",
+        "NRE-0.0",
+        "REN-0.0",
+        "RNE-0.0",
+        "DA-0.0",
+        "ADENRGEN-0.0",
+        "ENR-1.100",
+        "ENR-7.1",
+        "wifflepiggy",
+    ]
+    for section in bad_sections:
+        error = f"{section} is in an unexpected format!"
+        with pytest.raises(ValueError, match=error):
+            webscrapi.url_suffix(section)
+
+    with pytest.raises(TypeError):
+        webscrapi.url_suffix(1234)
 
 def test_search_enr_2_x():
     """search_enr_2_x"""
@@ -176,10 +212,10 @@ class TestGetTableMethod:
         mock_tables = [pd.DataFrame({"Column1": [1, 2], "Column2": [3, 4]}), pd.DataFrame({"Column3": [5, 6], "Column4": [7, 8]})]
         with patch("pandas.read_html", return_value=mock_tables) as mock_read_html:
             # Call the get_table() method
-            result = your_class_instance.get_table(section="TestSection", match=".+")
+            result = your_class_instance.get_table(section="AD-0.0", match=".+")
 
             # Check if pd.read_html was called with the correct arguments
-            mock_read_html.assert_called_once_with(your_class_instance.cycle_url + your_class_instance.url_suffix(section="TestSection"), flavor="bs4", match=".+")
+            mock_read_html.assert_called_once_with(your_class_instance.cycle_url + your_class_instance.url_suffix(section="AD-0.0"), flavor="bs4", match=".+")
 
             # Check if the method returned the expected result
             assert result == mock_tables
@@ -192,10 +228,10 @@ class TestGetTableMethod:
         with patch("pandas.read_html", return_value=[]) as mock_read_html:
             # Call the get_table() method and expect an exception to be raised
             with pytest.raises(functions.NoUrlDataFoundError) as exc_info:
-                your_class_instance.get_table(section="TestSection", match=".+")
+                your_class_instance.get_table(section="AD-0.0", match=".+")
 
             # Check if pd.read_html was called with the correct arguments
-            mock_read_html.assert_called_once_with(your_class_instance.cycle_url + your_class_instance.url_suffix(section="TestSection"), flavor="bs4", match=".+")
+            mock_read_html.assert_called_once_with(your_class_instance.cycle_url + your_class_instance.url_suffix(section="AD-0.0"), flavor="bs4", match=".+")
 
             # Check if the correct exception was raised
-            assert str(exc_info.value) == "No data found at the given url - " + your_class_instance.cycle_url + your_class_instance.url_suffix(section="TestSection")
+            assert str(exc_info.value) == "No data found at the given url - " + your_class_instance.cycle_url + your_class_instance.url_suffix(section="AD-0.0")
