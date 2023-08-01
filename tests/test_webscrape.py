@@ -25,6 +25,11 @@ work_dir = os.path.dirname(__file__)
 parent_dir = Path(work_dir).resolve().parents[0]
 logger.debug(f"Working directory is {work_dir}")
 
+# Create DataFrames directory if it doesn't already exist
+path_to_build = os.path.join(parent_dir, "eaip_parser", "DataFrames")
+if not os.path.exists(path_to_build):
+    os.makedirs(path_to_build)
+
 def test_init_country():
     """__init__"""
 
