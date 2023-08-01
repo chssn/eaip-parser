@@ -8,6 +8,7 @@ Chris Parkinson (@chssn)
 # Standard Libraries
 import filecmp
 import os
+from pathlib import Path
 
 # Third Party Libraries
 import pandas as pd
@@ -19,6 +20,10 @@ from unittest.mock import MagicMock, patch
 import tests.standard_test_cases as stc
 from eaip_parser import functions, lists
 from eaip_parser.webscrape import Webscrape, ProcessData
+
+work_dir = os.path.dirname(__file__)
+parent_dir = Path(work_dir).resolve().parents[0]
+logger.debug(f"Working directory is {work_dir}")
 
 def test_init_country():
     """__init__"""
@@ -97,13 +102,14 @@ def test_search_enr_2_x():
     webscrapi = ProcessData()
     file_names = ["ENR-2.1_0","ENR-2.1_1", "ENR-2.2_0", "ENR-2.2_1", "ENR-2.2_2"]
     for proc in file_names:
-        df_out = pd.read_csv(f"tests\\test_data\\{proc}.csv")
+        file_path = os.path.join(work_dir, "test_data", f"{proc}.csv")
+        df_out = pd.read_csv(file_path)
         # The function being tested
         webscrapi.search_enr_2_x(df_out, proc, no_build=True)
         filecmp.clear_cache()
-        assert filecmp.cmp(
-            f"tests\\test_data\\{proc}_AIRSPACE_NB.sct",
-            f"eaip_parser\\DataFrames\\{proc}_AIRSPACE.sct", shallow=False) is True
+        file_a = os.path.join(work_dir, "test_data", f"{proc}_AIRSPACE_NB.sct")
+        file_b = os.path.join(parent_dir, "eaip_parser", "DataFrames", f"{proc}_AIRSPACE.sct")
+        assert filecmp.cmp(file_a, file_b, shallow=False) is True
 
 def test_search_enr_3_x():
     """search_enr_3_x"""
@@ -117,14 +123,15 @@ def test_search_enr_3_x():
         ("ENR-3.2_5.csv", "ENR-3.2-LOWER-L15.txt"),
         ]
     for file_in, file_out in file_names:
-        df_out = pd.read_csv(f"tests\\test_data\\{file_in}")
+        file_path = os.path.join(work_dir, "test_data", file_in)
+        df_out = pd.read_csv(file_path)
         # The function being tested
         webscrapi.search_enr_3_x(df_out)
         logger.debug(f"Testing {file_out}")
         filecmp.clear_cache()
-        assert filecmp.cmp(
-            f"tests\\test_data\\{file_out}",
-            f"eaip_parser\\DataFrames\\{file_out}", shallow=False) is True
+        file_a = os.path.join(work_dir, "test_data", file_out)
+        file_b = os.path.join(parent_dir, "eaip_parser", "DataFrames", file_out)
+        assert filecmp.cmp(file_a, file_b, shallow=False) is True
 
 def test_process_enr_4():
     """process_enr_4"""
@@ -138,9 +145,9 @@ def test_process_enr_4():
     for file_out in file_names:
         logger.debug(f"Testing {file_out}")
         filecmp.clear_cache()
-        assert filecmp.cmp(
-            f"tests\\test_data\\{file_out}",
-            f"eaip_parser\\DataFrames\\{file_out}", shallow=False) is True
+        file_a = os.path.join(work_dir, "test_data", file_out)
+        file_b = os.path.join(parent_dir, "eaip_parser", "DataFrames", file_out)
+        assert filecmp.cmp(file_a, file_b, shallow=False) is True
 
 def test_generate_file_names():
     # Test case 1: Test with matching filenames
