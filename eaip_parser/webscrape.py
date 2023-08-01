@@ -506,7 +506,7 @@ class ProcessData:
             run_process(proc)
 
     def process_enr_3(self, no_build:bool=False) -> None:
-        """Process ENR 2 data"""
+        """Process ENR 3 data"""
 
         def run_process(file_name:str) -> list:
             df_out_path = os.path.join(functions.work_dir, "DataFrames", f"{file_name}")
@@ -547,7 +547,7 @@ class ProcessData:
             convert_coords_dump_df(nav_aid, "NAV_AID")
 
     def process_enr_4(self, no_build:bool=False) -> None:
-        """Process ENR 2 data"""
+        """Process ENR 4 data"""
 
         file_names = [
             ("ENR-4.1.csv", "VOR_UK.txt", "1"),
