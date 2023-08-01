@@ -20,7 +20,6 @@ from . import airac, builder, functions, lists
 # This is needed to supress 'xml as html' warnings with bs4
 warnings.filterwarnings("ignore", category=UserWarning)
 
-# Define a few decorators
 def parse_table(section:str, match:str=".+") -> None:
     """A decorator to parse the given section"""
     def decorator_func(func):
@@ -90,7 +89,10 @@ class Webscrape:
 
     def url_suffix(self, section:str) -> str:
         """Returns a url suffix formatted for the European eAIP standard"""
-        return str(f"{self.country}-{section}-{self.language}.html")
+        if (re.match(r"^(AD|ENR|GEN)\-[0-6]{1}\.\d{1,2}$", section) or
+            re.match(r"^AD\-[23]{1}\.[A-Z]{4}$", section)):
+            return str(f"{self.country}-{section}-{self.language}.html")
+        raise ValueError(f"{section} is in an unexpected format!")
 
     def get_table(self, section:str, match:str=".+") -> list:
         """Gets a table from the given url as a list of dataframes"""
