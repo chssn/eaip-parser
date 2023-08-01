@@ -8,6 +8,7 @@ Chris Parkinson (@chssn)
 # Standard Libraries
 import json
 import re
+from dataclasses import dataclass
 
 # Third Party Libraries
 import requests
@@ -16,7 +17,25 @@ from loguru import logger
 # Local Libraries
 
 
-class KiloJuliett():
+@dataclass
+class BuildSettings:
+    """Build settings"""
+    elnp:bool=True
+    wpt:bool=True
+    dupe:bool=True
+    xchglatlon:bool=False
+    title:bool=False
+    output_format:str="sct"
+
+
+@dataclass
+class ArcSettings:
+    """Arc Settings"""
+    arctype:int=0
+    arcres:int=9
+    polynl:int=1
+
+class KiloJuliett:
     """A class to build using https://kilojuliett.ch/webtools/geo/coordinatesconverter"""
 
     def __init__(self, base_url:str="https://kilojuliett.ch:443/webtools/geo/json") -> None:
@@ -25,55 +44,45 @@ class KiloJuliett():
 
     def settings(
             self,
-            elnp:bool=True,
-            wpt:bool=True,
-            dupe:bool=True,
-            xchglatlon:bool=False,
-            title:bool=False,
-            arctype:int=0,
-            arcres:int=9,
-            polynl:int=1,
-            output_format:str="sct"
+            build_settings: BuildSettings = BuildSettings(),
+            arc_settings: ArcSettings = ArcSettings()
             ) -> None:
         """Sets the settings"""
 
-        # New ploygon after empty line
-        if elnp:
-            self.request_settings["elnp"] = "on"
+        # Dictionary to map BuildSettings attributes to corresponding request settings
+        build_settings_mapping = {
+            "elnp": "elnp",
+            "wpt": "wpt",
+            "dupe": "dupe",
+            "xchglatlon": "xchglatlon",
+            "title": "title",
+        }
 
-        # Decode waypoints
-        if wpt:
-            self.request_settings["wpt"] = "on"
+        # Update request_settings based on BuildSettings attributes
+        for attr, setting_name in build_settings_mapping.items():
+            if getattr(build_settings, attr):
+                set_to = "on"
+                if setting_name == "title":
+                    set_to = r"%3B"
+                self.request_settings[setting_name] = set_to
 
-        # Allow duplicates
-        if dupe:
-            self.request_settings["dupe"] = "on"
+        # Dictionary to map ArcSettings attributes to corresponding request settings
+        arc_settings_mapping = {
+            "arctype": "arctype",
+            "arcres": "arcres",
+            "polynl": "polynl",
+        }
 
-        # Switch lat/lon values
-        if xchglatlon:
-            self.request_settings["xchglatlon"] = "on"
-
-        # Add polygon details
-        if title:
-            self.request_settings["title"] = r"%3B"
-
-        # Add arc type
-        if arctype in [0,1]:
-            self.request_settings["arctype"] = arctype
-        else:
-            raise ValueError("Arc type can only be 1 (Orthodromic) or 2 (Loxodromic)")
-
-        # Add arc resolution / steps in degrees
-        if arcres > 0 and arcres < 180:
-            self.request_settings["arcres"] = arcres
-        else:
-            raise ValueError("Arc resolution must be a value in degrees >0 and <180")
-
-        # Number of new lines between polygons
-        if polynl > 0 and polynl < 10:
-            self.request_settings["polynl"] = polynl
-        else:
-            raise ValueError("Number of new lines between polygons must be >0 and <10")
+        # Update request_settings based on ArcSettings attributes
+        for attr, setting_name in arc_settings_mapping.items():
+            value = getattr(arc_settings, attr)
+            if attr == "arctype" and value not in [0, 1]:
+                raise ValueError("Arc type can only be 0 (Orthodromic) or 1 (Loxodromic)")
+            if attr == "arcres" and not 0 <= value <= 180:
+                raise ValueError("Arc resolution must be a value in degrees >= 0 and <= 180")
+            if attr == "polynl" and not 0 < value < 10:
+                raise ValueError("Number of new lines between polygons must be > 0 and < 10")
+            self.request_settings[setting_name] = value
 
         # Set output format
         formats = [
@@ -84,10 +93,10 @@ class KiloJuliett():
             "vrc",
             "ts-line",
             "qtsp",
-            "vsys-dd"
+            "vsys-dd",
         ]
-        if output_format in formats:
-            self.request_settings["format"] = output_format
+        if build_settings.output_format in formats:
+            self.request_settings["format"] = build_settings.output_format
         else:
             raise ValueError(f"Format type must be one of {formats}")
 
@@ -97,50 +106,26 @@ class KiloJuliett():
     def data_input_validator(data:str) -> str:
         """Validates inputed data"""
 
-        if re.search(
+        regex_list = [
             r"^[NS]{1}\d{3}\.\d{2}(\.\d{2})?(\.\d{3})?(\:|\s)"
             r"[EW]{1}\d{3}\.\d{2}(\.\d{2})?(\.\d{3})?",
-            data
-            ):
-            return data
-        elif re.search(
             r"^\d{3}\.\d{2}(\.\d{2})?(\.\d{3})?[NS]{1}(\:|\s)"
             r"\d{3}\.\d{2}(\.\d{2})?(\.\d{3})?[EW]{1}",
-            data
-            ):
-            return data
-        elif re.search(
             r"^[NS]{1}\d{1,2}°\d{2}\.\d{2}'\s[EW]{1}\d{1,3}°\d{2}\.\d{2}'",
-            data
-            ):
-            return data
-        elif re.search(
             r"^\d{1,2}°\d{2}\.\d{2}'[NS]{1}\s\d{1,3}°\d{2}\.\d{2}'[EW]{1}",
-            data
-            ):
-            return data
-        elif re.search(r"^\d{6}[NS]{1}\s\d{7}[EW]{1}", data):
-            return data
-        elif re.search(r"^[NS]{1}\d{6}\s[EW]{1}\d{6,7}", data):
-            return data
-        elif re.search(r"^\d{4}[NS]{1}\d{5}[EW]{1}", data):
-            return data
-        elif re.search(r"^\d{2}[NS]{1}\d{3}[EW]{1}", data):
-            return data
-        elif re.search(
+            r"^\d{6}[NS]{1}\s\d{7}[EW]{1}",
+            r"^[NS]{1}\d{6}\s[EW]{1}\d{6,7}",
+            r"^\d{4}[NS]{1}\d{5}[EW]{1}",
+            r"^\d{2}[NS]{1}\d{3}[EW]{1}",
             r"^\d{2}°\d{2}'\d{2}\"[NS]{1}\s\,\s\d{3}°\d{2}'\d{2}\"[EW]{1}",
-            data
-            ):
-            return data
-        elif re.search(
             r"^[NS]{1}\d{2}°\d{2}'\d{2}\"\s\,\s[EW]{1}\d{1,3}°\d{2}'\d{2}\"",
-            data
-            ):
-            return data
-        elif re.search(r"^\-?\d{2}\.\d{5}\,\s\-?\d{2}\.\d{6}", data):
-            return data
-        elif re.search(r"^[NS]{1}\d{1}\.\d{3}\,\s[EW]{1}\d{1}\.\d{3}", data):
-            return data
+            r"^\-?\d{2}\.\d{5}\,\s\-?\d{2}\.\d{6}",
+            r"^[NS]{1}\d{1}\.\d{3}\,\s[EW]{1}\d{1}\.\d{3}"
+        ]
+
+        for pattern in regex_list:
+            if re.match(pattern, data):
+                return data
         raise ValueError(f"The entry {data} isn't valid")
 
     def request_output(self, data_in:str) -> str:

@@ -23,7 +23,7 @@ logger.debug(f"Working directory is {work_dir}")
 def split(word:str) -> list:
     """Splits a word and returns as a list"""
     if isinstance(word, str):
-        return [char for char in word]
+        return list(word)
     raise ValueError("This function can only process strings.")
 
 def is_25khz(frequency:str):
@@ -37,13 +37,11 @@ def is_25khz(frequency:str):
     if freq_match:
         if frequency.endswith(("00", "25", "50", "75")):
             return False
-        else:
-            round_decimal = round(int(freq_match[2]) / 25) * 25
-            if round_decimal == 1000:
-                return f"{str(int(freq_match[1])+1)}.000"
-            return f"{freq_match[1]}.{str(round_decimal).zfill(3)}"
-    else:
-        raise ValueError("Expected frequency in the format nnn.nnn MHz")
+        round_decimal = round(int(freq_match[2]) / 25) * 25
+        if round_decimal == 1000:
+            return f"{str(int(freq_match[1])+1)}.000"
+        return f"{freq_match[1]}.{str(round_decimal).zfill(3)}"
+    raise ValueError("Expected frequency in the format nnn.nnn MHz")
 
 
 class GitActions:
@@ -79,21 +77,22 @@ class GitActions:
         logger.info("You can find out more about winget here - "
                     "https://learn.microsoft.com/en-us/windows/package-manager/winget/")
 
-        # Launch the shell
-        process = subprocess.Popen([
-            "powershell.exe", "-Command", "winget install --id Git.Git -e --source winget"])
+        # Run the PowerShell command and capture the completed process
+        completed_process = subprocess.run(
+            ["powershell.exe", "-Command", "winget install --id Git.Git -e --source winget"],
+            capture_output=True,
+            text=True,
+            shell=True,
+            check=True
+        )
 
-        # Wait for the process to complete and get the exit status
-        process.communicate()
-        exit_status = process.returncode
-
-        # Continue with the remaining code or perform actions based on the exit status
-        if exit_status == 0:
+        # Check the return code of the completed process
+        if completed_process.returncode == 0:
             logger.success("PowerShell command executed successfully.")
             return True
-        else:
-            logger.error("PowerShell command failed with exit status:", exit_status)
-            return False
+        logger.error("PowerShell command failed with exit status:", completed_process.returncode)
+        logger.error("Error output:", completed_process.stderr)
+        return False
 
     def check_requirements(self) -> bool:
         """Checks to see if the basic requirements are satisfied"""
@@ -123,10 +122,9 @@ class GitActions:
         if os.path.exists(folder):
             logger.success(f"The repo has already been cloned to {folder}")
             return True
-        else:
-            logger.info(f"Cloning into {self.repo_url}")
-            git.Repo.clone_from(self.repo_url, folder, branch=self.branch)
-            logger.success("The repo has been successfully cloned")
+        logger.info(f"Cloning into {self.repo_url}")
+        git.Repo.clone_from(self.repo_url, folder, branch=self.branch)
+        logger.success("The repo has been successfully cloned")
         return False
 
     def pull(self) -> bool:
@@ -236,8 +234,7 @@ class Geo:
                       )
 
             return output
-        else:
-            raise ValueError("This function expects floats to be passed to it.")
+        raise ValueError("This function expects floats to be passed to it.")
 
     @staticmethod
     def dms2dd(lat:str, lon:str) -> list:
@@ -274,13 +271,12 @@ class Geo:
                 lon_out = lon_out - (lon_out * 2)
 
             return [lat_out, lon_out]
-        else:
-            logger.debug(f"{lat} {lat_split}")
-            logger.debug(f"{lon} {lon_split}")
-            raise ValueError(
-                "This function accepts lat/lon in the format DDD.MMM.SSS.sss \
-                     or DDMMSS / DDDMMSS prefixed or suffixed by N, S, E or W"
-                )
+        logger.debug(f"{lat} {lat_split}")
+        logger.debug(f"{lon} {lon_split}")
+        raise ValueError(
+            "This function accepts lat/lon in the format DDD.MMM.SSS.sss \
+                    or DDMMSS / DDDMMSS prefixed or suffixed by N, S, E or W"
+            )
 
 
 class NoUrlDataFoundError(Exception):
@@ -295,13 +291,14 @@ class NoUrlDataFoundError(Exception):
 class TacanVor:
     """Converts TACAN to VOR and vice versa"""
 
-    def validate_tacan(self, tacan:str) -> tuple:
+    @staticmethod
+    def validate_tacan(tacan:str) -> tuple:
         """Validates a string to see if it is a TACAN channel"""
 
         validate = re.match(r"^(\d{1,3})([XY]{1})$", tacan)
         if validate:
             return (validate[1], validate[2])
-        raise ValueError("TACAN channels are in the format (\d{1,3})([XY]{1})")
+        raise ValueError("TACAN channels are in the format (\\d{1,3})([XY]{1})")
 
     def tacan_to_vor_ils(self, tacan:str) -> str:
         """Converts TACAN to VOR"""

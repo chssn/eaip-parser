@@ -62,32 +62,38 @@ column_headers_route = [
 class Regex:
     """A whole host of regex patterns"""
 
-    def flight_level(self, string_to_search:str) -> list:
+    @staticmethod
+    def flight_level(string_to_search:str) -> list:
         """Searches for a bunch of flight levels"""
         return re.findall(r"(FL\s\d{2,3})", str(string_to_search))
 
-    def lateral_limits(self, string_to_search:str) -> list:
+    @staticmethod
+    def lateral_limits(string_to_search:str) -> list:
         """Searches for lateral limits"""
         return re.match(r"^([A-Z0-9\s]+)(\s\d{6}(\.\d{2})?[NS]{1}.*)", str(string_to_search))
 
-    def frequency(self, string_to_search:str, anchor:bool=False) -> list:
+    @staticmethod
+    def frequency(string_to_search:str, anchor:bool=False) -> list:
         """Searches for a frequency"""
         if anchor:
             return re.match(r"^(\d{3}\.\d{3})$", str(string_to_search))
         return re.match(r"(\d{3}\.\d{3})", str(string_to_search))
 
-    def coordinates(self, string_to_search:str) -> list:
+    @staticmethod
+    def coordinates(string_to_search:str) -> list:
         """Searches for a coordinate pair"""
         return re.match(
             r"^(\d{6}(\.\d{2})?[NS])(?:\s+)(\d{7}(\.\d{2})?[EW])$",
             str(string_to_search)
             )
 
-    def tacan_channel(self, string_to_search:str) -> list:
+    @staticmethod
+    def tacan_channel(string_to_search:str) -> list:
         """Searches for a bunch of flight levels"""
         return re.match(r"(\d{2,3}[XY]{1})", str(string_to_search))
 
-    def vor_dme_ndb(self, string_to_search:str) -> list:
+    @staticmethod
+    def vor_dme_ndb(string_to_search:str) -> list:
         """Searches for the word(s) VOR, DME and NDB"""
         return re.match(
             r"^([A-Z\s\']+)\s\s([VORDMENB]{3}(\/[VORDMENB]{3})?)",
