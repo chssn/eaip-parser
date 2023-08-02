@@ -72,9 +72,11 @@ class Webscrape:
         # Setup the processor
         self.proc = ProcessData()
 
-    def run(self, download_first:bool=True, no_build:bool=False) -> None:
+    def run(self, download_first:bool=True, no_build:bool=False, clean_start:bool=True) -> None:
         """Runs the full webscrape"""
 
+        if clean_start:
+            self.clean_start()
         if download_first:
             self.parse_ad_1_3()
             self.parse_enr_2_1()
@@ -86,6 +88,19 @@ class Webscrape:
         self.proc.process_enr_2(no_build=no_build)
         self.proc.process_enr_3(no_build=no_build)
         self.proc.process_enr_4(no_build=no_build)
+
+    @staticmethod
+    def clean_start():
+        """Delete all temporary files"""
+
+        # Check to see if temp directory already exists
+        temp_dir = os.path.join(functions.work_dir, "DataFrames")
+        if os.path.exists(temp_dir):
+            # Delete the temp directory
+            os.rmdir(temp_dir)
+            logger.info(f"Deleted temporary directory - {temp_dir}")
+        # Create the temp directory
+        os.makedirs(temp_dir)
 
     def url_suffix(self, section:str) -> str:
         """Returns a url suffix formatted for the European eAIP standard"""
