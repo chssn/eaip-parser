@@ -11,4 +11,4 @@ Chris Parkinson (@chssn)
 
 # Local Libraries
 
-__version__ = "0.4.0"
+__version__ = "v0.5.1"
