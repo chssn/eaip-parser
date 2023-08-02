@@ -36,6 +36,14 @@ def split(word:str) -> list:
         return list(word)
     raise ValueError("This function can only process strings.")
 
+def generate_file_names(file_start:str, file_type:str="csv") -> list:
+    """Generates an incremental list of filenames"""
+
+    path = os.path.join(work_dir, "DataFrames")
+    enr_files = ([file for file in os.listdir(path) if
+                    file.startswith(file_start) and file.endswith(file_type)])
+    return enr_files
+
 def is_25khz(frequency:str):
     """
     Works out if the given frequency is 25KHz

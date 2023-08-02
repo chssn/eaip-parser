@@ -136,15 +136,6 @@ class Webscrape:
             logger.warning(f"{error} for {address}")
         return None
 
-    @staticmethod
-    def generate_file_names(file_start:str, file_type:str="csv") -> list:
-        """Generates an incremental list of filenames"""
-
-        path = os.path.join(functions.work_dir, "DataFrames")
-        enr_files = ([file for file in os.listdir(path) if
-                      file.startswith(file_start) and file.endswith(file_type)])
-        return enr_files
-
     @parse_table("AD-1.3")
     def parse_ad_1_3(self, tables:list=None) -> pd.DataFrame:
         """Process data from AD 1.3 - INDEX TO AERODROMES AND HELIPORTS"""
@@ -682,7 +673,7 @@ class ProcessData:
 
         vor_dme = {}
         nav_aid = {}
-        file_names = Webscrape.generate_file_names("ENR-3")
+        file_names = functions.generate_file_names("ENR-3")
         for proc in file_names:
             rpp = run_process(proc)
             vor_dme.update(rpp[0])
