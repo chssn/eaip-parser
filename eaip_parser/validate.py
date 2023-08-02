@@ -196,6 +196,13 @@ class UkSectorFile:
             # If there is no matching file, then it isn't there
             logger.error(f"{a_type} {str(file).split('.', maxsplit=1)[0]} was found during "
                             "the scrape but doesn't seem to be in the current sector file")
+            comp_data["copy_file"] = os.path.join(
+                functions.work_dir, "DataFrames", f"ENR-3.2-{a_type}-{file}")
+            comp_data["copy_dest"] = os.path.join(
+                functions.work_dir, "DataFrames", "Output", "Airways", a_type)
+            logger.debug(comp_data["copy_file"])
+            logger.debug(comp_data["copy_dest"])
+            functions.copy_files(comp_data["copy_file"], comp_data["copy_dest"])
 
     def airways_rnav(self):
         """Run validation on rnav airways"""

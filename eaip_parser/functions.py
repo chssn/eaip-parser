@@ -9,6 +9,7 @@ Chris Parkinson (@chssn)
 import math
 import os
 import re
+import shutil
 import subprocess
 
 # Third Party Libraries
@@ -19,6 +20,15 @@ from loguru import logger
 
 work_dir = os.path.dirname(__file__)
 logger.debug(f"Working directory is {work_dir}")
+
+def copy_files(file:str, destination:str) -> None:
+    """Copy files from A to B"""
+
+    # Check if the destination directory exists, if not then create it
+    if not os.path.exists(destination):
+        os.makedirs(destination)
+
+    shutil.copy(file, destination)
 
 def split(word:str) -> list:
     """Splits a word and returns as a list"""
