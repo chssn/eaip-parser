@@ -3,6 +3,42 @@
 
 
 
+## v0.6.0 (2023-08-02)
+
+### Ci
+
+* ci: manual version bump ([`b500513`](https://github.com/chssn/eaip-parser/commit/b5005134b30f9d409aa7e4a71f4d5870dc81782c))
+
+### Documentation
+
+* docs: added extra debug messages ([`363f6de`](https://github.com/chssn/eaip-parser/commit/363f6defd917c1df1fd84db5f3296cb351e03206))
+
+* docs: corrected typo ([`a9ec9f5`](https://github.com/chssn/eaip-parser/commit/a9ec9f59fe96fe02a41776f7b4e275380e367763))
+
+### Feature
+
+* feat: added enr 4 validation ([`6ed5a6e`](https://github.com/chssn/eaip-parser/commit/6ed5a6e74a8281f3566fee06a21b20c1c4011770))
+
+* feat: added enr 5 data ([`f1f2c0b`](https://github.com/chssn/eaip-parser/commit/f1f2c0b91e73d5f0a989531c7e76fbcaab6c99eb))
+
+### Fix
+
+* fix: bonus space being added to a load of lines ([`d601f24`](https://github.com/chssn/eaip-parser/commit/d601f24c961ae9d84c90f0ccba6feb5328888820))
+
+* fix: no rate limiter for coordinate conversion ([`50a8124`](https://github.com/chssn/eaip-parser/commit/50a8124dc3477ff4218de46da0a68604bc7eb9d2))
+
+### Refactor
+
+* refactor: changed validate.py to compare.py ([`f9e9c15`](https://github.com/chssn/eaip-parser/commit/f9e9c157ca2407bd565a3c26a6742436809c0c75))
+
+### Test
+
+* test: updated test_run with new functions ([`c450fe4`](https://github.com/chssn/eaip-parser/commit/c450fe40653e3d6fdf92b8dbf1d62e5cd6bca58c))
+
+### Unknown
+
+* Merge branch &#39;main&#39; of https://github.com/chssn/eaip-parser ([`39ffa9c`](https://github.com/chssn/eaip-parser/commit/39ffa9c065de02097bb2b1c04071cd02cdf174a8))
+
 ## v0.5.1 (2023-08-02)
 
 ### Fix
