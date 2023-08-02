@@ -80,7 +80,7 @@ class Webscrape:
         if clean_start:
             self.clean_start()
         if download_first:
-            self.parse_ad_1_3()
+            self.parse_ad_2()
             self.parse_enr_2_1()
             self.parse_enr_2_2()
             self.parse_enr_3_2()
@@ -352,6 +352,28 @@ class Webscrape:
         nwt = nwt[["area"]]
 
         return nwt
+
+    def parse_ad_2(self) -> None:
+        """Pull data from AD 2 - AERODROMES"""
+
+        # Get a list of aerodromes which exist in the AIP
+        self.parse_ad_1_3()
+        # Load the list of aerodromes
+        df_to_load = os.path.join(functions.work_dir, "DataFrames", "AD-1.3.csv")
+        df_ad_1_3 = pd.read_csv(df_to_load)
+
+        for index, row in df_ad_1_3.iterrows():
+            logger.trace(index)
+            logger.info(f"Parsing AD-2.{row['icao_designator']} ({row['location']})")
+            df_list = self.get_table(f"AD-2.{row['icao_designator']}")
+
+            for idx, dfl in enumerate(df_list):
+                dfl_path = os.path.join(
+                    functions.work_dir,
+                    "DataFrames",
+                    f"{row['icao_designator']}_{idx}.csv"
+                    )
+                dfl.to_csv(dfl_path)
 
 
 class ProcessData:
