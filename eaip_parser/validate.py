@@ -51,6 +51,8 @@ class UkSectorFile:
     @staticmethod
     def list_match(list_to_match:list, list_to_compare:list) -> list:
         """Find matches and non-matches from comparing two lists"""
+        logger.debug(list_to_match)
+        logger.debug(list_to_compare)
         match_list = []
         no_match_list = []
         # Iterrate over the first list
@@ -186,7 +188,7 @@ class UkSectorFile:
                         # If anything doesn't line up then print both files side by side
                         logger.warning(f"No match for contents of {a_type} {file}")
 
-                        print(f"{a_type}  |  {comp_data['end_a']}  |  {comp_data['end_b']}")
+                        print(f"{a_type}  |  {comp_data['side_a']}  |  {comp_data['side_b']}")
                         for line_a, line_b in zip(comp_data["lines_a"], comp_data["lines_b"]):
                             print(f"{line_a.rstrip()}  |  {line_b.rstrip()}")
 
@@ -206,11 +208,21 @@ class UkSectorFile:
         scraped_rnav_lower = self.find_files_by_regex("ENR-3.2-LOWER-(.+)", file_path)
         scraped_rnav_upper = self.find_files_by_regex("ENR-3.2-UPPER-(.+)", file_path)
 
+        logger.debug(csf_rnav_lower)
+        logger.debug(scraped_rnav_lower)
+        logger.debug(csf_rnav_upper)
+        logger.debug(scraped_rnav_upper)
+
         # Produce lists of matching and non-matching file names as a starter
         list_match_csf_lower = self.list_match(csf_rnav_lower[0], scraped_rnav_lower[0])
         list_match_scraped_lower = self.list_match(scraped_rnav_lower[0], csf_rnav_lower[0])
         list_match_csf_upper = self.list_match(csf_rnav_upper[0], scraped_rnav_upper[0])
         list_match_scraped_upper = self.list_match(scraped_rnav_upper[0], csf_rnav_upper[0])
+
+        logger.debug(list_match_csf_lower)
+        logger.debug(list_match_scraped_lower)
+        logger.debug(list_match_csf_upper)
+        logger.debug(list_match_scraped_upper)
 
         # Run the actual validation
         self.airways_comparison(
