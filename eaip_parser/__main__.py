@@ -13,7 +13,7 @@ from loguru import logger
 
 # Local Libraries
 import eaip_parser
-from . import validate, webscrape
+from . import compare, webscrape
 
 @logger.catch
 def main() -> None:
@@ -27,10 +27,10 @@ def main() -> None:
     scrape = webscrape.Webscrape()
     scrape.run()
 
-    # Run the validator
-    validator = validate.UkSectorFile()
-    validator.airways_rnav()
-    validator.vor_dme_tacan()
+    # Run the comparison
+    comp = compare.UkSectorFile()
+    comp.airways_rnav()
+    comp.vor_dme_tacan()
 
 if __name__ == "__main__":
     main()
