@@ -110,14 +110,16 @@ class UkSectorFile:
     @staticmethod
     def airways_filename_finder(file_list:list, file:str) -> list:
         """Find a filename from a list"""
-        for file_fp in file_list:
-            if str(file_fp).endswith(str(file)):
-                full_path = file_fp
-                file_name = re.match(r".*([A-Z]+[0-9]+\.txt)$", str(full_path))
-                logger.debug(full_path)
-                logger.debug(file_name[1])
-                break
-        return [full_path, file_name[1]]
+        if len(file_list) > 0:
+            for file_fp in file_list:
+                if str(file_fp).endswith(str(file)):
+                    full_path = file_fp
+                    file_name = re.match(r".*([A-Z]+[0-9]+\.txt)$", str(full_path))
+                    logger.debug(full_path)
+                    logger.debug(file_name[1])
+                    break
+            return [full_path, file_name[1]]
+        raise ValueError("An empty list has been passed")
 
     @staticmethod
     def airways_comparison(
