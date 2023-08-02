@@ -7,7 +7,12 @@ major_on_zero = true
 tag_format = "v{version}"
 version_variable = [
     "eaip_parser/__init__.py:__version__",
+    "pyproject.toml:version",
 ]
+
+[tool.poetry]
+name = "eaip_parser"
+version = "0.6.0"
 
 [tool.semantic_release.branches.main]
 match = "(main|master)"
