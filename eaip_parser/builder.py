@@ -42,6 +42,7 @@ class KiloJuliett:
     def __init__(self, base_url:str="https://kilojuliett.ch:443/webtools/geo/json") -> None:
         self.request_settings = {}
         self.base_url = base_url
+        self.rate_limit = 0
 
     def settings(
             self,
@@ -156,6 +157,13 @@ class KiloJuliett:
             "Accept-Language": "en-GB,en-US;q=0.9,en;q=0.8"
             }
 
+        # Apply a rate limiter
+        if self.rate_limit > 1000:
+            logger.info(f"Rate limit hit for {self.base_url} - Pausing for 10 seconds...")
+            self.rate_limit = 0
+            time.sleep(10)
+            logger.info("Continuing...")
+
         attempt = 0
         while attempt < 5:
             response = requests.post(
@@ -165,11 +173,13 @@ class KiloJuliett:
                 timeout=30
                 )
 
+            # If any response other than 200, pause and try again
             if response.status_code != 200:
                 attempt += 1
                 logger.warning(f"Unable to connect to {self.base_url} - Attempt {attempt}")
                 time.sleep(5)
                 continue
+            self.rate_limit += 1
             json_load = json.loads(response.text)
             return json_load["txt"]
 
