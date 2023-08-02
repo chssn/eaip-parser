@@ -692,7 +692,7 @@ class ProcessData:
             logger.debug(file_path)
             with open(file_path, "w", encoding="utf-8") as file:
                 for line in output:
-                    file.write(f"{line}\n")
+                    file.write(f"{str(line).rstrip()}\n")
 
     def process_enr_5(self, no_build:bool=False) -> None:
         """Process ENR 5 data"""
