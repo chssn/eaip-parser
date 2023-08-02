@@ -101,9 +101,13 @@ class TestWebscrape:
                 patch.object(obj, "parse_enr_3_3") as mock_parse_enr_3_3, \
                 patch.object(obj, "parse_enr_4_1") as mock_parse_enr_4_1, \
                 patch.object(obj, "parse_enr_4_4") as mock_parse_enr_4_4, \
+                patch.object(obj, "parse_enr_5_1") as mock_parse_enr_5_1, \
+                patch.object(obj, "parse_enr_5_2") as mock_parse_enr_5_2, \
+                patch.object(obj, "parse_enr_5_3") as mock_parse_enr_5_3, \
                 patch.object(obj.proc, "process_enr_2") as mock_process_enr_2, \
                 patch.object(obj.proc, "process_enr_3") as mock_process_enr_3, \
-                patch.object(obj.proc, "process_enr_4") as mock_process_enr_4:
+                patch.object(obj.proc, "process_enr_4") as mock_process_enr_4, \
+                patch.object(obj.proc, "process_enr_5") as mock_process_enr_5:
 
             # Call the run method
             obj.run(download_first=True, no_build=False, clean_start=False)
@@ -116,11 +120,15 @@ class TestWebscrape:
         assert mock_parse_enr_3_3.called
         assert mock_parse_enr_4_1.called
         assert mock_parse_enr_4_4.called
+        assert mock_parse_enr_5_1.called
+        assert mock_parse_enr_5_2.called
+        assert mock_parse_enr_5_3.called
 
         # Assert that the process methods were called
         assert mock_process_enr_2.called_with(no_build=False)
         assert mock_process_enr_3.called_with(no_build=False)
         assert mock_process_enr_4.called_with(no_build=False)
+        assert mock_process_enr_5.called_with(no_build=False)
 
     class TestUrlSuffixMethod:
         test_object = Webscrape()
