@@ -58,6 +58,13 @@ column_headers_route = [
     "del3",
 ]
 
+# Column headers for navigation warning areas (ENR 5)
+column_headers_nav_warn = [
+    "area",
+    "vert_limits",
+    "remarks",
+]
+
 
 class Regex:
     """A whole host of regex patterns"""

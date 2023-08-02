@@ -86,9 +86,13 @@ class Webscrape:
             self.parse_enr_3_3()
             self.parse_enr_4_1()
             self.parse_enr_4_4()
+            self.parse_enr_5_1()
+            self.parse_enr_5_2()
+            self.parse_enr_5_3()
         self.proc.process_enr_2(no_build=no_build)
         self.proc.process_enr_3(no_build=no_build)
         self.proc.process_enr_4(no_build=no_build)
+        self.proc.process_enr_5(no_build=no_build)
 
     @staticmethod
     def clean_start():
@@ -290,6 +294,61 @@ class Webscrape:
         tdf.reset_index(drop=True, inplace=True)
 
         return tdf
+
+    @parse_table("ENR-5.1")
+    def parse_enr_5_1(self, tables:list=None) -> pd.DataFrame:
+        """Pull data from ENR 5.1 - PROHIBITED, RESTRICTED AND DANGER AREAS"""
+
+        logger.debug(f"{self.date_in} - ENR5.1")
+        # The data object is table[0]
+        nwt = tables[0]
+
+        # Modify header row
+        nwt.columns = lists.column_headers_nav_warn
+
+        # Name the columns to keep
+        nwt = nwt[["area"]]
+
+        return nwt
+
+    @parse_table("ENR-5.2")
+    def parse_enr_5_2(self, tables:list=None) -> pd.DataFrame:
+        """Pull data from ENR 5.1 - PROHIBITED, RESTRICTED AND DANGER AREAS"""
+
+        logger.debug(f"{self.date_in} - ENR5.2")
+        # The data object is table[0]
+        nwt = tables[0]
+
+        # Modify header row
+        nwt.columns = lists.column_headers_nav_warn
+
+        # Name the columns to keep
+        nwt = nwt[["area"]]
+
+        return nwt
+
+    @parse_table("ENR-5.3")
+    def parse_enr_5_3(self, tables:list=None) -> pd.DataFrame:
+        """Pull data from ENR 5.1 - PROHIBITED, RESTRICTED AND DANGER AREAS"""
+
+        logger.debug(f"{self.date_in} - ENR5.3")
+        # The data object is table[1] - table[0] relates exclusively to small arms ranges with an
+        # upper limit of 500ft
+        nwt = tables[1]
+
+        # Modify header row
+        nwt.columns = [
+            "area",
+            "vert_limits",
+            "advisory",
+            "authority",
+            "remarks",
+        ]
+
+        # Name the columns to keep
+        nwt = nwt[["area"]]
+
+        return nwt
 
 
 class ProcessData:
@@ -509,6 +568,52 @@ class ProcessData:
 
         return output
 
+    def search_enr_5_x(self, df_enr_5:pd.DataFrame, file_name:str, no_build:bool=False) -> list:
+        """ENR 5.1 search actions"""
+
+        # Start the iterator
+        data_store = {}
+        data_store["file_name"] = file_name
+        data_store["no_build"] = no_build
+        for index, row in df_enr_5.iterrows():
+            logger.trace(index)
+            # Search for relevant data
+            if file_name == "ENR-5.1":
+                data_store["data"] = re.match(
+                    r"(EG\s[DPR]{1}\d{1,4}([A-Z]{1})?)(.*)(?<=\s\s)"
+                    r"((\d{6}[NS]{1}\s\d{7}[EW]{1}.*)|(\bA\scircle\b.*))", row["area"])
+                if data_store["data"]:
+                    data_store["eid"] = data_store["data"][1]
+                    data_store["name"] = str(data_store["eid"][3]).strip()
+                    data_store["coords"] = data_store["data"][4]
+            elif file_name == "ENR-5.2":
+                data_store["data"] = re.match(
+                    r"(.*)(?<=\s\s)((\d{6}[NS]{1}\s\d{7}[EW]{1}.*)|(\bA\scircle\b.*))", row["area"])
+                if data_store["data"]:
+                    data_store["eid"] = f"META {str(index).zfill(3)}"
+                    data_store["name"] = str(data_store["data"][1]).strip()
+                    data_store["coords"] = data_store["data"][2]
+            elif file_name == "ENR-5.3":
+                data_store["data"] = re.match(
+                    r"(.*)(?<=\s\s)((\d{6}[NS]{1}\s\d{7}[EW]{1}.*)|(\bA\scircle\b.*))", row["area"])
+                if data_store["data"]:
+                    data_store["eid"] = f"OADN {str(index).zfill(3)}"
+                    data_store["name"] = str(data_store["data"][1]).strip()
+                    data_store["coords"] = data_store["data"][2]
+
+                    # If a single coordinate is returned, the row can be filtered out as it is of
+                    # no use in the context of an sct file.
+                    if lists.Regex.coordinates(data_store["coords"]):
+                        continue
+                    # If a radius less than or equal to 1NM is returned then this can also be
+                    # filtered for the same reason.
+                    radius_check = re.match(
+                        r"(\d{1,2}(\.\d{1,3})?)(?=\sNM\sradius)", data_store["coords"])
+                    if radius_check:
+                        if float(radius_check[1]) <= 1:
+                            continue
+            self.write_enr_5(data_store)
+
     def process_enr_2(self, no_build:bool=False) -> None:
         """Process ENR 2 data"""
 
@@ -582,6 +687,20 @@ class ProcessData:
             with open(file_path, "w", encoding="utf-8") as file:
                 for line in output:
                     file.write(f"{line}\n")
+
+    def process_enr_5(self, no_build:bool=False) -> None:
+        """Process ENR 5 data"""
+
+        logger.info("Processing ENR 5 data...")
+
+        def run_process(file_name:str) -> None:
+            df_out_path = os.path.join(functions.work_dir, "DataFrames", f"{file_name}.csv")
+            df_out = pd.read_csv(df_out_path)
+            self.search_enr_5_x(df_out, file_name, no_build=no_build)
+
+        file_names = ["ENR-5.1", "ENR-5.2", "ENR-5.3"]
+        for proc in file_names:
+            run_process(proc)
 
     def write_enr_2(self, areas:dict, file_name:str, no_build:bool, limits_class:dict) -> None:
         """Write ENR 2 files"""
@@ -657,6 +776,33 @@ class ProcessData:
                             file.write(line_to_write)
                         else:
                             file.write(f"{line_to_write}\n")
+
+    def write_enr_5(self, data_store:dict):
+        """Write ENR 5 files"""
+
+        if data_store["data"]:
+            file_path = os.path.join(
+                functions.work_dir,
+                "DataFrames",
+                f"{data_store['file_name']}-{data_store['eid']}.txt"
+                )
+            with open(file_path, "w", encoding="utf-8") as file:
+                # Request data
+                if data_store["no_build"]:
+                    sct_data = ("The 'no build' option has been selected...\n"
+                                f"{data_store['coords']}")
+                else:
+                    sct_data = self.build.request_output(data_store["coords"])
+
+                id_split = str(data_store["eid"]).split(" ", maxsplit=2)
+                # Add comments into the sct output
+                output = f";{id_split[0]}{id_split[1]} - {data_store['name']}"
+                file.write(output)
+                # Add the returned coords
+                coords_split = sct_data.split("\n")
+                for crd in coords_split:
+                    output = f"\n{id_split[0]}{id_split[1]}\t{crd}"
+                    file.write(output)
 
     def route_check_enr_3(self, row:dict, scraped_data:dict, vor_dme:dict, nav_point:dict) -> dict:
         """Check to see if this is a significant point"""
