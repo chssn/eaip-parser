@@ -9,6 +9,7 @@ Chris Parkinson (@chssn)
 import os
 import re
 import shutil
+import urllib.error
 import warnings
 
 # Third Party Libraries
@@ -130,6 +131,8 @@ class Webscrape:
                 return tables
             raise functions.NoUrlDataFoundError(address)
         except ValueError as error:
+            logger.warning(f"{error} for {address}")
+        except urllib.error.HTTPError as error:
             logger.warning(f"{error} for {address}")
         return None
 
