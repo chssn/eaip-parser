@@ -698,19 +698,21 @@ class ProcessData:
                 lower_fl = str(vert_limits[1]).split(" ")[1]
             else:
                 lower_fl = 0
-            if (int(upper_fl) >= self.airway_split and
+            if (int(upper_fl) > self.airway_split and
                 int(lower_fl) >= self.airway_split):
                 # Upper airway only
-                logger.debug("Upper airway only")
+                logger.debug(f"Upper airway only {upper_fl} > {self.airway_split}")
+                logger.debug(f"Upper airway only {lower_fl} >= {self.airway_split}")
                 scraped_data["uplo"] = 0
-            elif (int(upper_fl) < self.airway_split and
+            elif (int(upper_fl) <= self.airway_split and
                     int(lower_fl) < self.airway_split):
                 # Lower airway only
-                logger.debug("Lower airway only")
+                logger.debug(f"Lower airway only {upper_fl} <= {self.airway_split}")
+                logger.debug(f"Lower airway only {lower_fl} <= {self.airway_split}")
                 scraped_data["uplo"] = 1
             else:
                 # Must be both upper and lower
-                logger.debug("Both airways")
+                logger.debug(f"Both airways {upper_fl} and {lower_fl}")
                 scraped_data["uplo"] = 2
             return scraped_data
         ve_text = f"Can't find upper and lower levels from {row['vertical_limits']}"
@@ -719,12 +721,14 @@ class ProcessData:
     @staticmethod
     def route_upper_lower(prefix:str, key:str, scraped_data:str) -> dict:
         """Identify upper and lower routes"""
+
         if scraped_data[prefix+"_count"] == scraped_data["p_count"]:
             scraped_data[key] = f"{scraped_data[key]} {scraped_data['point']}"
         else:
             scraped_data[key] = (f"{scraped_data[key]} NCS! {scraped_data['last_point']} "
                                     f"{scraped_data['point']}")
             scraped_data[prefix+"_count"] = scraped_data["p_count"]
+
         scraped_data[prefix+"_count"] += 1
 
         return scraped_data
