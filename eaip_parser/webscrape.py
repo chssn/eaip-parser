@@ -17,7 +17,7 @@ import pandas as pd
 from loguru import logger
 
 # Local Libraries
-from . import airac, builder, functions, lists
+from . import airac, builder, functions, lists, process
 
 # This is needed to supress 'xml as html' warnings with bs4
 warnings.filterwarnings("ignore", category=UserWarning)
@@ -71,8 +71,9 @@ class Webscrape:
 
         # Set the date
         self.date_in = date_in
-        # Setup the processor
+        # Setup the processors
         self.proc = ProcessData()
+        self.proc_a = process.ProcessAerodromes()
 
     def run(self, download_first:bool=True, no_build:bool=False, clean_start:bool=True) -> None:
         """Runs the full webscrape"""
@@ -94,6 +95,7 @@ class Webscrape:
         self.proc.process_enr_3(no_build=no_build)
         self.proc.process_enr_4(no_build=no_build)
         self.proc.process_enr_5(no_build=no_build)
+        self.proc_a.run()
 
     @staticmethod
     def clean_start():

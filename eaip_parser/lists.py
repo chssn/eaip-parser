@@ -65,6 +65,65 @@ column_headers_nav_warn = [
     "remarks",
 ]
 
+# Column headers for AD 2.10
+column_headers_ad_2_10 = [
+    "id",
+    "designation",
+    "type",
+    "position",
+    "elevation",
+    "height",
+    "lighting",
+    "remarks",
+]
+
+# Column headers for AD 2.12
+column_headers_ad_2_12 = [
+    "id",
+    "rwy",
+    "bearing",
+    "dimensions",
+    "surface",
+    "coordinates",
+    "elevation",
+    "slope",
+]
+
+# Column headers for AD 2.17
+column_headers_ad_2_17 = [
+    "id",
+    "designation",
+    "vertical_limits",
+    "airspace_class",
+    "callsign",
+    "transition_altitude",
+    "hours",
+    "remarks",
+]
+
+# Column headers for AD 2.18
+column_headers_ad_2_18 = [
+    "id",
+    "designation",
+    "callsign",
+    "frequency",
+    "satvoice",
+    "logon",
+    "hours",
+    "remarks",
+]
+
+# Column headers for AD 2.19
+column_headers_ad_2_19 = [
+    "id",
+    "type",
+    "ident",
+    "frequency",
+    "hours",
+    "coordinates",
+    "elevation",
+    "remarks",
+]
 
 class Regex:
     """A whole host of regex patterns"""
