@@ -107,7 +107,8 @@ class TestWebscrape:
                 patch.object(obj.proc, "process_enr_2") as mock_process_enr_2, \
                 patch.object(obj.proc, "process_enr_3") as mock_process_enr_3, \
                 patch.object(obj.proc, "process_enr_4") as mock_process_enr_4, \
-                patch.object(obj.proc, "process_enr_5") as mock_process_enr_5:
+                patch.object(obj.proc, "process_enr_5") as mock_process_enr_5, \
+                patch.object(obj.proc_a, "run") as mock_process_run:
 
             # Call the run method
             obj.run(download_first=True, no_build=False, clean_start=False)
@@ -129,6 +130,7 @@ class TestWebscrape:
         assert mock_process_enr_3.called_with(no_build=False)
         assert mock_process_enr_4.called_with(no_build=False)
         assert mock_process_enr_5.called_with(no_build=False)
+        assert mock_process_run.called
 
     class TestUrlSuffixMethod:
         test_object = Webscrape()
@@ -220,17 +222,6 @@ class TestWebscrape:
                 error = (f"No data found at the given url - {self.obj.cycle_url}"
                         f"{self.obj.url_suffix(section='AD-0.0')}")
                 assert str(exc_info.value) == error
-
-    def test_generate_file_names(self):
-        test_data = [
-            "file1.csv",
-            "file2.csv",
-            "flie3.csv",
-            "file4.txt",
-        ]
-        with patch("os.listdir", return_value=test_data):
-            output = Webscrape.generate_file_names("file", "csv")
-            assert output == ["file1.csv", "file2.csv"]
 
 class TestProcessData:
     def test_search_enr_2_x(self):

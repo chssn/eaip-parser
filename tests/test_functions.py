@@ -12,6 +12,7 @@ import subprocess
 # Third Party Libraries
 import git
 import pytest
+from unittest.mock import MagicMock, patch
 
 # Local Libraries
 import eaip_parser.functions as functions
@@ -40,6 +41,17 @@ def test_is_25khz():
         functions.is_25khz("1211.875")
     with pytest.raises(ValueError):
         functions.is_25khz("121.8755")
+
+def test_generate_file_names():
+    test_data = [
+        "file1.csv",
+        "file2.csv",
+        "flie3.csv",
+        "file4.txt",
+    ]
+    with patch("os.listdir", return_value=test_data):
+        output = functions.generate_file_names("file", "csv")
+        assert output == ["file1.csv", "file2.csv"]
 
 def test_north_south():
     """north_south"""
