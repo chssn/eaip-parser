@@ -3,6 +3,44 @@
 
 
 
+## v0.5.0 (2023-08-02)
+
+### Documentation
+
+* docs: clearer debugging ([`aa782c7`](https://github.com/chssn/eaip-parser/commit/aa782c774dea09b0d74fca3b2c48b429842c4695))
+
+* docs: corrected typos ([`1f57442`](https://github.com/chssn/eaip-parser/commit/1f57442344c259a325fb604a502e20f8630e946e))
+
+### Feature
+
+* feat: option to start fresh again ([`d8cf49a`](https://github.com/chssn/eaip-parser/commit/d8cf49a16052bebcc3972526956e815a57de6d6b))
+
+* feat: validate will now start to move data around ([`7630112`](https://github.com/chssn/eaip-parser/commit/7630112595d6dd68b33b1eb3124ce623ef37ee6c))
+
+### Fix
+
+* fix: copying files with a length of 0 bytes ([`589d26d`](https://github.com/chssn/eaip-parser/commit/589d26d9b405223861aca760144f83d1959e3ec1))
+
+* fix: failing on first http error ([`2097d67`](https://github.com/chssn/eaip-parser/commit/2097d678b1b5d487b14b115aa27cac59466b36dc))
+
+* fix: not deleting non-empty directories ([`835c9a0`](https://github.com/chssn/eaip-parser/commit/835c9a0b14ce15dde1967b42b72fe827acdfa144))
+
+* fix: not splitting routes correctly ([`7f160ad`](https://github.com/chssn/eaip-parser/commit/7f160ad4f1e2a5b5ad16a63c1113be90e902d9dd))
+
+* fix: entering a None line after a non-contiuation ([`4d75be3`](https://github.com/chssn/eaip-parser/commit/4d75be347cb89c82c7fbef81c8d535158ee9a173))
+
+* fix: not handling an empty list correctly ([`7b764b5`](https://github.com/chssn/eaip-parser/commit/7b764b579c05a595257f8984f988e442bd44e29e))
+
+* fix: added validation to url_suffix ([`35fa287`](https://github.com/chssn/eaip-parser/commit/35fa287af1459e8ee05eb80dbb3895235237dc64))
+
+### Test
+
+* test: updated tests with new function changes ([`d68c548`](https://github.com/chssn/eaip-parser/commit/d68c5488fd4eb2e4e3a40a6e77eee477e44e5080))
+
+* test: updates to webscrape tests ([`0da7b42`](https://github.com/chssn/eaip-parser/commit/0da7b423655f9380637d9e2ecf96a38c1870e80d))
+
+* test: updated url_suffix test ([`e6ca0bf`](https://github.com/chssn/eaip-parser/commit/e6ca0bfb15be00a8803e8fa6b952727721e3fe93))
+
 ## v0.4.1 (2023-08-01)
 
 ### Build
