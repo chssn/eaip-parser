@@ -11,6 +11,7 @@ Chris Parkinson (@chssn)
 import pytest
 import requests
 from loguru import logger
+from unittest.mock import MagicMock, patch
 
 # Local Libraries
 from eaip_parser.builder import KiloJuliett, BuildSettings, ArcSettings
@@ -264,6 +265,7 @@ N052.26.56.556 E000.32.24.066 N052.27.02.052 E000.33.01.560"""),
         kj_test.base_url = "https://thisdoesntwork.obviously"
         kj_test.request_output("any string will do")
 
-    with pytest.raises(requests.HTTPError):
-        kj_test.base_url = "https://www.aurora.nats.co.uk/non_existant_page.html"
-        kj_test.request_output("any string will do")
+    with patch("time.sleep", return_value=0.1):
+        with pytest.raises(requests.HTTPError):
+            kj_test.base_url = "https://www.aurora.nats.co.uk/non_existant_page.html"
+            kj_test.request_output("any string will do")

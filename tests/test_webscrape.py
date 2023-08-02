@@ -106,7 +106,7 @@ class TestWebscrape:
                 patch.object(obj.proc, "process_enr_4") as mock_process_enr_4:
 
             # Call the run method
-            obj.run(download_first=True, no_build=False)
+            obj.run(download_first=True, no_build=False, clean_start=False)
 
         # Assert that the parse methods were called when download_first is True
         assert mock_parse_ad_1_3.called
