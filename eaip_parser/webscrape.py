@@ -8,6 +8,7 @@ Chris Parkinson (@chssn)
 # Standard Libraries
 import os
 import re
+import shutil
 import warnings
 
 # Third Party Libraries
@@ -97,7 +98,7 @@ class Webscrape:
         temp_dir = os.path.join(functions.work_dir, "DataFrames")
         if os.path.exists(temp_dir):
             # Delete the temp directory
-            os.rmdir(temp_dir)
+            shutil.rmtree(temp_dir)
             logger.info(f"Deleted temporary directory - {temp_dir}")
         # Create the temp directory
         os.makedirs(temp_dir)
