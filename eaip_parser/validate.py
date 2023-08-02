@@ -248,3 +248,47 @@ class UkSectorFile:
             csf_rnav_upper,
             scraped_rnav_upper
             )
+
+    @staticmethod
+    def compare_enr_4(lines_a, lines_b) -> None:
+        """Line by line comparator for ENR 4 data"""
+
+        no_match = True
+        for line_a, line_b in zip(lines_a, lines_b):
+            logger.info("-"*60)
+            if (line_a.rstrip() != line_b.rstrip()) and (line_a in lines_b):
+                logger.success(f"Not in sequence - {line_a.rstrip()}")
+                no_match = False
+            elif (line_a.rstrip() != line_b.rstrip()) and (line_a not in lines_b):
+                split_it = line_a.split(";", maxsplit=1)[0]
+                for item in lines_b:
+                    if item.startswith(split_it):
+                        chk_a = line_a.rstrip().upper()
+                        chk_b = item.rstrip().upper()
+                        if chk_a == chk_b:
+                            logger.success(f"Not in sequence - {chk_a}")
+                        else:
+                            logger.warning(f"A: {chk_a}")
+                            logger.warning(f"B: {chk_b}")
+                        no_match = False
+            if no_match:
+                logger.error(f"Not found in scraped data - {line_a.rstrip()}")
+            else:
+                logger.success(line_a.rstrip())
+
+    def vor_dme_tacan(self):
+        """Run validation on vor list"""
+
+        side_a = os.path.join(functions.work_dir, "UK-Sector-File", "Navaids", "VOR_UK.txt")
+        side_b = os.path.join(functions.work_dir, "DataFrames", "VOR_UK.txt")
+        # Open both files side by side
+        with open(side_a, "r", encoding="utf-8") as file_open_a, \
+            open(side_b, "r", encoding="utf-8") as file_open_b:
+            # Read file contents into variables
+            lines_a = file_open_a.readlines()
+            lines_b = file_open_b.readlines()
+
+            logger.info("A to B")
+            self.compare_enr_4(lines_a=lines_a, lines_b=lines_b)
+            logger.info("B to A")
+            self.compare_enr_4(lines_a=lines_b, lines_b=lines_a)
