@@ -633,7 +633,7 @@ class ProcessData:
                     # Deal with any non-continuous sections of an airway
                     if point == "NCS!":
                         file.write(";non continuous section\n")
-                    elif point_plus == "NCS!":
+                    elif point_plus == "NCS!" or point is None:
                         pass
                     else:
                         line_to_write = f"{point} {point} {point_plus} {point_plus.rstrip()}"
