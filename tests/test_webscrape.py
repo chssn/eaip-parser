@@ -94,7 +94,7 @@ class TestWebscrape:
         obj = Webscrape()
 
         # Mock the parse and process methods
-        with patch.object(obj, "parse_ad_1_3") as mock_parse_ad_1_3, \
+        with patch.object(obj, "parse_ad_2") as mock_parse_ad_2, \
                 patch.object(obj, "parse_enr_2_1") as mock_parse_enr_2_1, \
                 patch.object(obj, "parse_enr_2_2") as mock_parse_enr_2_2, \
                 patch.object(obj, "parse_enr_3_2") as mock_parse_enr_3_2, \
@@ -113,7 +113,7 @@ class TestWebscrape:
             obj.run(download_first=True, no_build=False, clean_start=False)
 
         # Assert that the parse methods were called when download_first is True
-        assert mock_parse_ad_1_3.called
+        assert mock_parse_ad_2.called
         assert mock_parse_enr_2_1.called
         assert mock_parse_enr_2_2.called
         assert mock_parse_enr_3_2.called
