@@ -8,6 +8,7 @@ Chris Parkinson (@chssn)
 # Standard Libraries
 import json
 import re
+import time
 from dataclasses import dataclass
 
 # Third Party Libraries
@@ -155,15 +156,21 @@ class KiloJuliett:
             "Accept-Language": "en-GB,en-US;q=0.9,en;q=0.8"
             }
 
-        response = requests.post(
-            self.base_url,
-            headers=headers,
-            data=self.request_settings,
-            timeout=30
-            )
+        attempt = 0
+        while attempt < 5:
+            response = requests.post(
+                self.base_url,
+                headers=headers,
+                data=self.request_settings,
+                timeout=30
+                )
 
-        if response.status_code != 200:
-            raise requests.HTTPError(f"{self.base_url} not found")
-        json_load = json.loads(response.text)
+            if response.status_code != 200:
+                attempt += 1
+                logger.warning(f"Unable to connect to {self.base_url} - Attempt {attempt}")
+                time.sleep(5)
+                continue
+            json_load = json.loads(response.text)
+            return json_load["txt"]
 
-        return json_load["txt"]
+        raise requests.HTTPError(f"{self.base_url} not found")
