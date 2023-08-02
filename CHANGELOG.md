@@ -3,6 +3,16 @@
 
 
 
+## v0.5.1 (2023-08-02)
+
+### Fix
+
+* fix: version number not being updated ([`6e98a3a`](https://github.com/chssn/eaip-parser/commit/6e98a3aa09f341e204d04999a22d1d13d23680d2))
+
+### Unknown
+
+* Merge branch &#39;main&#39; of https://github.com/chssn/eaip-parser ([`7ddf393`](https://github.com/chssn/eaip-parser/commit/7ddf3932af764dec481e3607e75530d7f062c315))
+
 ## v0.5.0 (2023-08-02)
 
 ### Documentation
