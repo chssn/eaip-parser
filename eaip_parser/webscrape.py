@@ -360,13 +360,14 @@ class Webscrape:
             logger.info(f"Parsing AD-2.{row['icao_designator']} ({row['location']})")
             df_list = self.get_table(f"AD-2.{row['icao_designator']}")
 
-            for idx, dfl in enumerate(df_list):
-                dfl_path = os.path.join(
-                    functions.work_dir,
-                    "DataFrames",
-                    f"{row['icao_designator']}_{idx}.csv"
-                    )
-                dfl.to_csv(dfl_path)
+            if df_list is not None:
+                for idx, dfl in enumerate(df_list):
+                    dfl_path = os.path.join(
+                        functions.work_dir,
+                        "DataFrames",
+                        f"{row['icao_designator']}_{idx}.csv"
+                        )
+                    dfl.to_csv(dfl_path)
 
 
 class ProcessData:
