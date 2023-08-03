@@ -25,12 +25,14 @@ class ProcessAerodromes:
     """A class to process data scraped from AD 2"""
 
     def __init__(self) -> None:
-        # Load the list of aerodromes
-        df_to_load = os.path.join(functions.work_dir, "DataFrames", "AD-1.3.csv")
-        self.df_ad_1_3 = pd.read_csv(df_to_load)
+        pass
 
     def run(self) -> None:
         """Run the full process"""
+
+        # Load the list of aerodromes
+        df_to_load = os.path.join(functions.work_dir, "DataFrames", "AD-1.3.csv")
+        df_ad_1_3 = pd.read_csv(df_to_load)
 
         data = {}
         data["obstacles"] = pd.DataFrame(columns=lists.column_headers_ad_2_10)
@@ -41,14 +43,14 @@ class ProcessAerodromes:
         file = {}
 
         # For each aerodrome defined in AD 1.3 do this
-        for index, row in self.df_ad_1_3.iterrows():
+        for index, row in df_ad_1_3.iterrows():
             logger.info(f"Processing {row['icao_designator']} ({index})")
             # Find all the tables relating to the specified aerodrome
             data["aero_tables"] = functions.generate_file_names(row["icao_designator"])
             # Iterate over that list of tables
             for table in data["aero_tables"]:
-                df_table_path = os.path.join(functions.work_dir, "DataFrames", table)
-                data["table"] = pd.read_csv(df_table_path)
+                data["df_path"] = os.path.join(functions.work_dir, "DataFrames", table)
+                data["table"] = pd.read_csv(data["df_path"])
                 # Search for the table containing AD 2.2
                 file["check"] = self.ad_2_2(data["table"])
                 if file["check"]:
@@ -84,10 +86,10 @@ class ProcessAerodromes:
         for item, dataframe in data.items():
             if item not in ["table", "aero_tables", "search"]:
                 del dataframe["id"]
-                df_path = os.path.join(
+                data["df_path"] = os.path.join(
                     functions.work_dir, "DataFrames", f"AA - {str(item).upper()}.csv"
                     )
-                dataframe.to_csv(df_path)
+                dataframe.to_csv(data["df_path"])
 
     @staticmethod
     def ad_2_generic(
