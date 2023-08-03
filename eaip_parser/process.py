@@ -84,7 +84,8 @@ class ProcessAerodromes:
 
         # Do some house cleaning before commiting
         for item, dataframe in data.items():
-            if item not in ["table", "aero_tables", "search"]:
+            if (item not in ["table", "aero_tables", "search"] and
+                isinstance(dataframe, pd.DataFrame)):
                 del dataframe["id"]
                 data["df_path"] = os.path.join(
                     functions.work_dir, "DataFrames", f"AA - {str(item).upper()}.csv"
