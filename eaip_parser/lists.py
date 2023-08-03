@@ -139,6 +139,12 @@ class Regex:
         return re.match(r"^([A-Z0-9\s]+)(\s\d{6}(\.\d{2})?[NS]{1}.*)", str(string_to_search))
 
     @staticmethod
+    def vertical_limits(string_to_search:str) -> list:
+        """Searches for vertical limits"""
+        return re.match(
+            r"(?:Upper\slimit\:\s)(.+)(?:\s\sLower\slimit\:\s)(.+)", str(string_to_search))
+
+    @staticmethod
     def frequency(string_to_search:str, anchor:bool=False) -> list:
         """Searches for a frequency"""
         if anchor:
@@ -146,12 +152,18 @@ class Regex:
         return re.match(r"(\d{3}\.\d{3})", str(string_to_search))
 
     @staticmethod
-    def coordinates(string_to_search:str) -> list:
+    def coordinates(string_to_search:str, anchor:bool=True) -> list:
         """Searches for a coordinate pair"""
+        if anchor:
+            return re.match(
+                    r"^(\d{6}(\.\d{2})?[NS])(?:\s+)(\d{7}(\.\d{2})?[EW])$",
+                    str(string_to_search)
+                    )
         return re.match(
-            r"^(\d{6}(\.\d{2})?[NS])(?:\s+)(\d{7}(\.\d{2})?[EW])$",
-            str(string_to_search)
-            )
+                r"(\d{6}(\.\d{2})?[NS])(?:\s+)(\d{7}(\.\d{2})?[EW])",
+                str(string_to_search)
+                )
+        
 
     @staticmethod
     def tacan_channel(string_to_search:str) -> list:
