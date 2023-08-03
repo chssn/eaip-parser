@@ -130,6 +130,29 @@ class KiloJuliett:
                 return data
         raise ValueError(f"The entry {data} isn't valid")
 
+    @staticmethod
+    def check_in_uk(coords:str) -> bool:
+        """Checks if the returned values are within the bounds of the United Kingdom"""
+
+        lat = re.findall(r"([NS])(\d{3})", coords)
+        lon = re.findall(r"([EW])(\d{3})", coords)
+        for item in lat:
+            if item[0] == "S":
+                logger.error(f"{item} not within UK bounds!\n{coords}")
+                return False
+            if int(item[1]) < 46 or int(item[1]) > 62:
+                logger.error(f"{item} not within UK bounds!\n{coords}")
+                return False
+        for item in lon:
+            if item[0] == "W" and int(item[1]) > 11:
+                logger.error(f"{item} not within UK bounds!\n{coords}")
+                return False
+            if item[0] == "E" and int(item[1]) > 2:
+                logger.error(f"{item} not within UK bounds!\n{coords}")
+                return False
+
+        return True
+
     def request_output(self, data_in:str) -> str:
         """
         Requests the transformed input data from
@@ -181,6 +204,9 @@ class KiloJuliett:
                 continue
             self.rate_limit += 1
             json_load = json.loads(response.text)
-            return json_load["txt"]
+            if self.check_in_uk(json_load["txt"]):
+                return json_load["txt"]
+            else:
+                raise ValueError(f"Failed with input data\n{data_in}")
 
         raise requests.HTTPError(f"{self.base_url} not found")
