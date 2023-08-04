@@ -546,7 +546,7 @@ class BuildAirports:
 
                     # Request data
                     if self.no_build:
-                        sct_data = ("The 'no build' option has been selected...")
+                        sct_data = "The 'no build' option has been selected..."
                     else:
                         # Needs to be sent as double coords due to 3rd party limitations
                         coord_out = f"{data['coords'][1]} {data['coords'][3]}"
