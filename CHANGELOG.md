@@ -3,6 +3,32 @@
 
 
 
+## v0.8.0 (2023-08-04)
+
+### Feature
+
+* feat: added &#39;Airports&#39; builder ([`058156f`](https://github.com/chssn/eaip-parser/commit/058156f7ece8bc6a0ac0700a03703c0134065937))
+
+### Fix
+
+* fix: updated regex class ([`ef94ade`](https://github.com/chssn/eaip-parser/commit/ef94adec4196528ea9b740a35e5b3209e8161c25))
+
+* fix: basic check that returned coords are in UK ([`b071ca1`](https://github.com/chssn/eaip-parser/commit/b071ca17b5f77e3e53afd4aac8e9e7b2a936aba2))
+
+* fix: &#39;str&#39; object does not support item deletion ([`e84bb57`](https://github.com/chssn/eaip-parser/commit/e84bb57b2721e4bd4a6a9296047e059c0720e78b))
+
+* fix: TypeError: &#39;NoneType&#39; object is not iterable ([`9f4ffc9`](https://github.com/chssn/eaip-parser/commit/9f4ffc90a235199c7f58f548f19a15d620141eab))
+
+### Style
+
+* style: unecessary parens ([`018ecc3`](https://github.com/chssn/eaip-parser/commit/018ecc3e714d01594738f69ba6dd26db2ce2f0b5))
+
+* style: trailing whitespace ([`5b35338`](https://github.com/chssn/eaip-parser/commit/5b353386ed48f4e2584f586ac2c56f5642f6d39c))
+
+### Unknown
+
+* Merge branch &#39;main&#39; of https://github.com/chssn/eaip-parser ([`afe99dd`](https://github.com/chssn/eaip-parser/commit/afe99dd494d01d04139345ab9f139c0265f47442))
+
 ## v0.7.0 (2023-08-03)
 
 ### Ci
