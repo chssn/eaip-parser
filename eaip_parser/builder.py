@@ -266,7 +266,7 @@ class BuildAirports:
         """Returns something representing the opposing runway"""
 
         if runway is not None:
-            # Search the given string
+            # Search the given string - not sure what the X suffix denotes but G seems to be grass
             rwy = re.match(r"^(\d{1,2})([LRCXG]{1})?$", str(runway))
             # Flip the number using modulo 36 as we're dealing in 2 digit numbers
             rwy_opp = (int(rwy[1]) + 18) % 36
