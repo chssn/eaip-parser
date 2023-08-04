@@ -3,6 +3,34 @@
 
 
 
+## v0.7.0 (2023-08-03)
+
+### Ci
+
+* ci: more attempts to get __init__ to update ([`0352955`](https://github.com/chssn/eaip-parser/commit/0352955122a23d1a967a71a55897efb6b1c41c96))
+
+### Feature
+
+* feat: scrape AD 2 data to df ([`e09173d`](https://github.com/chssn/eaip-parser/commit/e09173d76c67526f61cf08d8ec845ddb79fe1ad6))
+
+* feat: added full scrape of AD 2 ([`ce853b5`](https://github.com/chssn/eaip-parser/commit/ce853b5e0b8bdcad7ff52b164900c7f640f36c72))
+
+### Fix
+
+* fix: better handling of http errors ([`54b5758`](https://github.com/chssn/eaip-parser/commit/54b5758e1807cfbf93352a1c8d96363e310f229d))
+
+### Refactor
+
+* refactor: pytest failing ([`1185384`](https://github.com/chssn/eaip-parser/commit/1185384b860b12a3fd63a203cb1c677b0f787ae2))
+
+* refactor: moved file name function ([`eb744b6`](https://github.com/chssn/eaip-parser/commit/eb744b65305a5559791166c2ba57a7fc5d141173))
+
+### Test
+
+* test: updated tests to reflect new function home ([`17daaf6`](https://github.com/chssn/eaip-parser/commit/17daaf6bdc44f4661219f0a99fb8c6e57a08bdb7))
+
+* test: updated to reflect change in run function ([`28e1a69`](https://github.com/chssn/eaip-parser/commit/28e1a69ec59e55440ca590e5b121ae1167529afc))
+
 ## v0.6.0 (2023-08-02)
 
 ### Ci
