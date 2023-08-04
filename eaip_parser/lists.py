@@ -163,7 +163,6 @@ class Regex:
                 r"(\d{6}(\.\d{2})?[NS])(?:\s+)(\d{7}(\.\d{2})?[EW])",
                 str(string_to_search)
                 )
-        
 
     @staticmethod
     def tacan_channel(string_to_search:str) -> list:
