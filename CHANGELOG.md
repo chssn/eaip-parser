@@ -3,6 +3,34 @@
 
 
 
+## v0.8.1 (2023-08-05)
+
+### Documentation
+
+* docs: updated logging messages ([`94f7c0a`](https://github.com/chssn/eaip-parser/commit/94f7c0aaf537e70ccc55a81082624683aa6c2085))
+
+* docs: clarified use of search string ([`996d30b`](https://github.com/chssn/eaip-parser/commit/996d30bd336690746401a80994577aaec298b3d6))
+
+### Fix
+
+* fix: not handling rougue tripple digit rwy ([`96fc797`](https://github.com/chssn/eaip-parser/commit/96fc7976ed0a4b7060a8c2205b374f18db63b980))
+
+* fix: not handling out of bounds rwy numbers ([`fdf2f6b`](https://github.com/chssn/eaip-parser/commit/fdf2f6bd6c872fa6934a51e569b51bb6f74d920f))
+
+* fix: returning &#39;True&#39; result in error ([`1d7b2ce`](https://github.com/chssn/eaip-parser/commit/1d7b2cefdec2f10271a0219fe31ab8f6601f0cd5))
+
+* fix: function modified to return a dict ([`20035fe`](https://github.com/chssn/eaip-parser/commit/20035fe6d681600a507f7a46c4ed51aa6d946109))
+
+### Performance
+
+* perf: un-neccessary elif ([`2b64fcf`](https://github.com/chssn/eaip-parser/commit/2b64fcffbe2f21d98f7e471fc01e07de61e0e961))
+
+### Test
+
+* test: updated with new functions ([`475c97f`](https://github.com/chssn/eaip-parser/commit/475c97f8f000254ab1a6fafb0afcef8d143ff149))
+
+* test: updated to test the returned dict ([`7d74f4e`](https://github.com/chssn/eaip-parser/commit/7d74f4e18f3ce9652c6b5a18cf5b75e29fa869a0))
+
 ## v0.8.0 (2023-08-04)
 
 ### Feature
