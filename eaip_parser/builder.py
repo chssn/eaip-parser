@@ -286,8 +286,8 @@ class BuildAirports:
                     if rwy[2] == "G":
                         return f"{str(rwy_opp).zfill(2)}G"
 
-                # This function will return a single digit runway number if no suffix and mathmatically
-                # calculated. This is required for df searches.
+                # This function will return a single digit runway number if no suffix and
+                # mathmatically calculated. This is required for df searches.
                 return str(rwy_opp)
         raise ValueError(f"{runway} is not a valid string")
 
@@ -295,13 +295,16 @@ class BuildAirports:
     def runway_print(runway:str) -> str:
         """Returns a printable runway complete with spaces"""
 
-        if len(runway) == 1:
+        if len(runway) == 1 and re.match(r"^\d{1}$", runway):
             # Two spaces
             return f"0{runway}  "
-        if len(runway) == 2:
+        if len(runway) == 2 and re.match(r"^\d{1}[LRCXG]$", runway):
+            # Single space
+            return f"0{runway} "
+        elif len(runway) == 2 and re.match(r"^\d{2}$", runway):
             # Two spaces
             return f"{runway}  "
-        if len(runway) == 3:
+        if len(runway) == 3 and re.match(r"^\d{2}[LRCXG]$", runway):
             # Single space
             return f"{runway} "
         raise ValueError(f"{runway} is an unknown input format for runway")
