@@ -301,7 +301,7 @@ class BuildAirports:
         if len(runway) == 2 and re.match(r"^\d{1}[LRCXG]$", runway):
             # Single space
             return f"0{runway} "
-        elif len(runway) == 2 and re.match(r"^\d{2}$", runway):
+        if len(runway) == 2 and re.match(r"^\d{2}$", runway):
             # Two spaces
             return f"{runway}  "
         if len(runway) == 3 and re.match(r"^\d{2}[LRCXG]$", runway):
