@@ -138,24 +138,26 @@ class KiloJuliett:
     def check_in_uk(coords:str) -> bool:
         """Checks if the returned values are within the bounds of the United Kingdom"""
 
-        lat = re.findall(r"([NS])(\d{3})", coords)
-        lon = re.findall(r"([EW])(\d{3})", coords)
-        for item in lat:
-            if item[0] == "S":
-                logger.error(f"{item} not within UK bounds!\n{coords}")
-                return False
-            if int(item[1]) < 46 or int(item[1]) > 62:
-                logger.error(f"{item} not within UK bounds!\n{coords}")
-                return False
-        for item in lon:
-            if item[0] == "W" and int(item[1]) > 11:
-                logger.error(f"{item} not within UK bounds!\n{coords}")
-                return False
-            if item[0] == "E" and int(item[1]) > 2:
-                logger.error(f"{item} not within UK bounds!\n{coords}")
-                return False
+        lat = re.findall(r"(?:^|\s)([NS])(\d{3})", coords)
+        lon = re.findall(r"(?:^|\s)([EW])(\d{3})", coords)
+        if len(lat) > 0 and len(lon) > 0:
+            for item in lat:
+                if item[0] == "S":
+                    logger.error(f"{item} not within UK bounds!\n{coords}")
+                    return False
+                if int(item[1]) < 46 or int(item[1]) > 62:
+                    logger.error(f"{item} not within UK bounds!\n{coords}")
+                    return False
+            for item in lon:
+                if item[0] == "W" and int(item[1]) > 11:
+                    logger.error(f"{item} not within UK bounds!\n{coords}")
+                    return False
+                if item[0] == "E" and int(item[1]) > 2:
+                    logger.error(f"{item} not within UK bounds!\n{coords}")
+                    return False
 
-        return True
+            return True
+        raise ValueError(f"No results found in the given string: {coords}")
 
     def request_output(self, data_in:str) -> str:
         """
