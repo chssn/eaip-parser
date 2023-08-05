@@ -156,7 +156,11 @@ def test_dms2dd():
         ("514633N", "0015153E", [51.77592, 1.86495]),
     ]
     for lat, lon, expected_result in test_cases:
-        pytest.approx(Geo.dms2dd(lat, lon), expected_result)
+        expected_dict = {
+            "lat": expected_result[0],
+            "lon": expected_result[1],
+        }
+        pytest.approx(Geo.dms2dd(lat, lon), expected_dict)
 
     with pytest.raises(ValueError):
         Geo.dms2dd("051.46.33.31", "001.51.53.82")
