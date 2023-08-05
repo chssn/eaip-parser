@@ -255,7 +255,7 @@ class Geo:
         raise ValueError("This function expects floats to be passed to it.")
 
     @staticmethod
-    def dms2dd(lat:str, lon:str) -> list:
+    def dms2dd(lat:str, lon:str) -> dict:
         """Converts Degress, Minutes and Seconds to Decimal Degrees"""
 
         # try and match DDD.MMM.SSS.sss latitude
@@ -288,7 +288,11 @@ class Geo:
             if e_or_w[1] == "W":
                 lon_out = lon_out - (lon_out * 2)
 
-            return [lat_out, lon_out]
+            return_coords = {
+                "lat": lat_out,
+                "lon": lon_out,
+            }
+            return return_coords
         logger.debug(f"{lat} {lat_split}")
         logger.debug(f"{lon} {lon_split}")
         raise ValueError(
