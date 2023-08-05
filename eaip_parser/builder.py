@@ -267,25 +267,28 @@ class BuildAirports:
     def runway_flip_flop(runway:str) -> dict:
         """Returns something representing the opposing runway"""
 
-        if runway is not None:
-            # Search the given string - not sure what the X suffix denotes but G seems to be grass
-            rwy = re.match(r"^(\d{1,2})([LRCXG]{1})?$", str(runway))
+        # Search the given string - not sure what the X suffix denotes but G seems to be grass
+        rwy = re.match(r"^(\d{1,2})([LRCXG]{1})?$", str(runway).upper())
+        if runway is not None and rwy:
             # Flip the number using modulo 36 as we're dealing in 2 digit numbers
-            rwy_opp = (int(rwy[1]) + 18) % 36
-            # Get the alternate letter if any
-            if len(rwy.groups()) + 1 == 3:
-                if rwy[2] == "L":
-                    return f"{str(rwy_opp).zfill(2)}R"
-                if rwy[2] == "R":
-                    return f"{str(rwy_opp).zfill(2)}L"
-                if rwy[2] == "C":
-                    return f"{str(rwy_opp).zfill(2)}C"
-                if rwy[2] == "X":
-                    return f"{str(rwy_opp).zfill(2)}X"
-                if rwy[2] == "G":
-                    return f"{str(rwy_opp).zfill(2)}G"
+            if int(rwy[1]) >= 0 and int(rwy[1]) <= 36:
+                rwy_opp = (int(rwy[1]) + 18) % 36
+                # Get the alternate letter if any
+                if len(rwy.groups()) + 1 == 3:
+                    if rwy[2] == "L":
+                        return f"{str(rwy_opp).zfill(2)}R"
+                    if rwy[2] == "R":
+                        return f"{str(rwy_opp).zfill(2)}L"
+                    if rwy[2] == "C":
+                        return f"{str(rwy_opp).zfill(2)}C"
+                    if rwy[2] == "X":
+                        return f"{str(rwy_opp).zfill(2)}X"
+                    if rwy[2] == "G":
+                        return f"{str(rwy_opp).zfill(2)}G"
 
-            return str(rwy_opp)
+                # This function will return a single digit runway number if no suffix and mathmatically
+                # calculated. This is required for df searches.
+                return str(rwy_opp)
         raise ValueError(f"{runway} is not a valid string")
 
     @staticmethod
