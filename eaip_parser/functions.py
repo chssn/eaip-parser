@@ -293,11 +293,11 @@ class Geo:
                 "lon": lon_out,
             }
             return return_coords
-        logger.debug(f"{lat} {lat_split}")
-        logger.debug(f"{lon} {lon_split}")
+        logger.warning(f"{lat} {lat_split}")
+        logger.warning(f"{lon} {lon_split}")
         raise ValueError(
-            "This function accepts lat/lon in the format DDD.MMM.SSS.sss \
-                    or DDMMSS / DDDMMSS prefixed or suffixed by N, S, E or W"
+            ("This function accepts lat/lon in the format DDD.MMM.SSS.sss"
+             "or DDMMSS / DDDMMSS prefixed or suffixed by N, S, E or W")
             )
 
 
