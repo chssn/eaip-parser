@@ -14,7 +14,7 @@ from loguru import logger
 from unittest.mock import MagicMock, patch
 
 # Local Libraries
-from eaip_parser.builder import KiloJuliett, BuildSettings, ArcSettings
+from eaip_parser.builder import KiloJuliett, BuildSettings, ArcSettings, BuildAirports
 
 def test_init():
     """__init__"""
@@ -207,9 +207,36 @@ def test_data_input_validator():
         logger.debug(f"Testing {test}")
         with pytest.raises(ValueError):
             KiloJuliett().data_input_validator(test)
-    
+
     with pytest.raises(TypeError):
         KiloJuliett().data_input_validator(123)
+
+def test_check_in_uk():
+    """check_in_uk"""
+    good_test_cases = [
+        ("N052.27.02.052 E000.34.18.441 N052.26.56.556 E000.34.55.935", True),
+        ("S052.27.02.052 E000.34.18.441 N052.26.56.556 E000.34.55.935", False),
+        ("N052.27.02.052 E000.34.18.441 N052.26.56.556 S000.34.55.935", False),
+        ("N052.27.02.052 E000.34.18.441 N052.26.56.556 E000.34.55.935", True),
+        ("N052.27.02.052 E000.34.18.441 N052.26.56.556 E003.34.55.935", False),
+        ("N045.27.02.052 E000.34.18.441 N052.26.56.556 E000.34.55.935", False),
+        ("N052.27.02.052 W012.34.18.441 N052.26.56.556 E000.34.55.935", False),
+        ("N063.27.02.052 E000.34.18.441 N052.26.56.556 E000.34.55.935", False),
+        ("N052.27.02.052E000.34.18.441N052.26.56.556 E000.34.55.935", True),
+        ("N052 E000 N052 E000", True),
+    ]
+    for test, result in good_test_cases:
+        assert KiloJuliett.check_in_uk(test) is result
+
+    bad_test_cases = [
+        "N052.27.02.052E000.34.18.441N052.26.56.556E000.34.55.935",
+        "ABCN052123E0008791N052HHHFOPSE000",
+        "",
+    ]
+    for test in bad_test_cases:
+        logger.debug(test)
+        with pytest.raises(ValueError):
+            KiloJuliett.check_in_uk(test)
 
 def test_request_output():
     """request_output"""
@@ -269,3 +296,75 @@ N052.26.56.556 E000.32.24.066 N052.27.02.052 E000.33.01.560"""),
         with pytest.raises(requests.HTTPError):
             kj_test.base_url = "https://www.aurora.nats.co.uk/non_existant_page.html"
             kj_test.request_output("any string will do")
+
+def test_runway_flip_flop():
+    """runway_flip_flop"""
+
+    good_test_cases = [
+        ("5", "23"),
+        ("05", "23"),
+        (5, "23"),
+        ("5X", "23X"),
+        ("05X", "23X"),
+        ("5C", "23C"),
+        ("05C", "23C"),
+        ("5L", "23R"),
+        ("05L", "23R"),
+        ("5R", "23L"),
+        ("05R", "23L"),
+        ("5x", "23X"),
+        ("05x", "23X"),
+        ("5c", "23C"),
+        ("05c", "23C"),
+        ("5l", "23R"),
+        ("05l", "23R"),
+        ("5r", "23L"),
+        ("05r", "23L"),
+        ("23", "5"),
+        (23, "5"),
+        ("0", "18"),
+        ("00", "18"),
+        (0, "18"),
+        ("36", "18"),
+        (36, "18"),
+        ("18", "0"),
+        (18, "0"),
+    ]
+    for test, result in good_test_cases:
+        assert BuildAirports.runway_flip_flop(test) == result
+
+    bad_test_cases = [
+        "R01",
+        "",
+        "001",
+        "001R",
+        37,
+        "37",
+        "-1",
+        -1,
+    ]
+    for test in bad_test_cases:
+        with pytest.raises(ValueError):
+            BuildAirports.runway_flip_flop(test)
+
+def test_runway_print():
+    """runway_flip_flop"""
+
+    good_test_cases = [
+        ("5", "05  "),
+        ("05", "05  "),
+        ("5X", "05X "),
+        ("05X", "05X "),
+    ]
+    for test, result in good_test_cases:
+        assert BuildAirports.runway_print(test) == result
+
+    bad_test_cases = [
+        "R010",
+        "",
+        "001",
+        "001R",
+    ]
+    for test in bad_test_cases:
+        with pytest.raises(ValueError):
+            BuildAirports.runway_print(test)
