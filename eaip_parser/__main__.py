@@ -21,7 +21,7 @@ def main() -> None:
 
     logger.remove()
     logger.add(sys.stderr, level="INFO")
-    logger.info(f"eAIP Parser and Sector File Validator - {eaip_parser.__version__}")
+    logger.info(f"eAIP Parser and Sector File Validator - {eaip_parser.__VERSION__}")
 
     # Run the webscraper
     scrape = webscrape.Webscrape()
