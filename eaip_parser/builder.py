@@ -43,7 +43,7 @@ class ArcSettings:
 class KiloJuliett:
     """A class to build using https://kilojuliett.ch/webtools/geo/coordinatesconverter"""
 
-    def __init__(self, base_url:str="https://kilojuliett.ch:443/webtools/geo/json") -> None:
+    def __init__(self, base_url:str="https://kilojuliett.ch/webtools/geo/json") -> None:
         self.request_settings = {}
         self.base_url = base_url
         self.rate_limit = 0
@@ -145,14 +145,14 @@ class KiloJuliett:
                 if item[0] == "S":
                     logger.error(f"{item} not within UK bounds!\n{coords}")
                     return False
-                if int(item[1]) < 46 or int(item[1]) > 62:
+                if int(item[1]) < 45 or int(item[1]) > 62:
                     logger.error(f"{item} not within UK bounds!\n{coords}")
                     return False
             for item in lon:
                 if item[0] == "W" and int(item[1]) > 11:
                     logger.error(f"{item} not within UK bounds!\n{coords}")
                     return False
-                if item[0] == "E" and int(item[1]) > 2:
+                if item[0] == "E" and int(item[1]) > 5:
                     logger.error(f"{item} not within UK bounds!\n{coords}")
                     return False
 
@@ -169,7 +169,7 @@ class KiloJuliett:
         logger.trace(data_in)
 
         headers = {
-            "Sec-Ch-Ua": "",
+            "Sec-Ch-Ua": '"Google Chrome";v="125", "Chromium";v="125", "Not.A/Brand";v="24"',
             "Accept": "application/json,text/javascript, */*; q=0.01",
             "Content-Type": "application/x-www-form-urlencoded; charset=UTF-8",
             "X-Requested-With": "XMLHttpRequest",
@@ -182,7 +182,7 @@ class KiloJuliett:
             "Sec-Fetch-Mode": "cors",
             "Sec-Fetch-Dest": "empty",
             "Referer": "https://kilojuliett.ch/webtools/geo/coordinatesconverter",
-            "Accept-Encoding": "gzip, deflate",
+            "Accept-Encoding": "gzip, deflate, br, zstd",
             "Accept-Language": "en-GB,en-US;q=0.9,en;q=0.8"
             }
 
@@ -212,9 +212,8 @@ class KiloJuliett:
             json_load = json.loads(response.text)
             if self.check_in_uk(json_load["txt"]):
                 return json_load["txt"]
-            raise ValueError(f"Failed with input data\n{data_in}")
-
-        raise requests.HTTPError(f"{self.base_url} not found")
+            break
+        return "Nothing"
 
 
 class BuildAirports:
