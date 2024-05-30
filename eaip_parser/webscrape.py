@@ -191,9 +191,9 @@ class Webscrape:
         # The data object table[0] is for ATZ
         atz = tables[0]
         # The data object table[27] is for FRA
-        fra = tables[27]
+        fra = tables[26]
         # The data object table[28] is for Channel Islands Airspace
-        cia = tables[28]
+        cia = tables[27]
 
         # Modify header rows
         column_headers = [
