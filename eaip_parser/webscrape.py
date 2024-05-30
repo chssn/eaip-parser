@@ -655,7 +655,7 @@ class ProcessData:
             search_results = self.search_enr_3_x(df_out)
             return search_results
 
-        def convert_coords_dump_df(coord_in:dict, name:str) -> str:
+        def convert_coords_dump_df(coord_in:dict, name:str) -> None:
             for coord in coord_in.items():
                 # The coordinates need passing twice to work with the builder
                 # This is a 3rd party api limitation
