@@ -434,9 +434,6 @@ class ProcessData:
                     callsign = re.match(r"^([A-Z\s]+)(?:\s+[A-Z]{1}[a-z]+)", str(row['callsign']))
                     # Cleanup the frequency
                     frequency = lists.Regex.frequency(row["frequency"])
-                    if frequency:
-                        if functions.is_25khz(frequency[1]):
-                            logger.warning(f"{frequency[1]} is not a 25KHz frequency!")
 
                     if limits and coords and callsign and frequency:
                         limits_class[title[1]] = (f"Class {limits[7]} airspace from {limits[4]} "
