@@ -1,3 +1,15 @@
+# Changelog
+
+## [0.8.2](https://github.com/chssn/eaip-parser/compare/v0.8.1...v0.8.2) (2024-05-30)
+
+
+### Bug Fixes
+
+* geo bounds too narrow ([48f92ba](https://github.com/chssn/eaip-parser/commit/48f92bacdaf2d55baab130add2d4fa5adecaff85))
+* index out of bounds ([0d621d2](https://github.com/chssn/eaip-parser/commit/0d621d2ac2b25cd13babd4b490dabe55d4ceead6))
+* value error on legitimate action ([78154bb](https://github.com/chssn/eaip-parser/commit/78154bb59b620099c02de426bbfa67712130b657))
+* warning about non-25kHz frequencies ([2e117e7](https://github.com/chssn/eaip-parser/commit/2e117e7beb8f905219492f18d6b192554a6f2add))
+
 # CHANGELOG
 
 
