@@ -212,7 +212,8 @@ class KiloJuliett:
             json_load = json.loads(response.text)
             if self.check_in_uk(json_load["txt"]):
                 return json_load["txt"]
-            break
+            else:
+                return "NUK"
         raise requests.exceptions.HTTPError(f"Error loading {self.base_url}")
 
 
