@@ -778,6 +778,7 @@ class ProcessData:
             "DataFrames",
             f"ENR-3.2-{uorl}-{split_route[0]}.txt"
             )
+        line_one_passed = False
         with open(file_path, "w", encoding="utf-8") as file:
             for idx in range(start, route_len-1, 1):
                 if (idx + 1) < route_len:
@@ -791,7 +792,7 @@ class ProcessData:
                         point_plus = f"{split_route[idx+1]}  "
 
                     # Deal with any non-continuous sections of an airway
-                    if point == "NCS!":
+                    if point == "NCS!" and line_one_passed:
                         file.write(";non continuous section\n")
                     elif point_plus == "NCS!" or point is None:
                         pass
@@ -801,6 +802,7 @@ class ProcessData:
                             file.write(line_to_write)
                         else:
                             file.write(f"{line_to_write}\n")
+                line_one_passed = True
 
     def write_enr_5(self, data_store:dict):
         """Write ENR 5 files"""
