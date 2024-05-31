@@ -1,1 +1,0 @@
-pytest.exe --cov=eaip_parser
