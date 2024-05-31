@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.8.3](https://github.com/chssn/eaip-parser/compare/v0.8.2...v0.8.3) (2024-05-31)
+
+
+### Bug Fixes
+
+* local module not importing ([a4801a9](https://github.com/chssn/eaip-parser/commit/a4801a9bc11bdf5fd974bd103ec7d4681f8514f9))
+* uk bounds too restrictive ([3f800ca](https://github.com/chssn/eaip-parser/commit/3f800cab743bb67a0612f1edb82f560ab3e1e327))
+
 ## [0.8.2](https://github.com/chssn/eaip-parser/compare/v0.8.1...v0.8.2) (2024-05-30)
 
 
