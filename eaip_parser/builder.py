@@ -489,9 +489,6 @@ class BuildAirports:
                 data["psfix"] = data['callsign'].split("_")
                 data["ll"] = self.coord.split()
                 data["freq"] = freq_out
-                freq_check = functions.is_25khz(data["freq"])
-                if freq_check:
-                    data["freq"] = freq_check
                 if data["callsign"] == f"{self.icao}_TWR":
                     file_basic = os.path.join(self.airport_dir, "Basic.txt")
                     with open(file_basic, "a", encoding="utf-8") as file_b:
