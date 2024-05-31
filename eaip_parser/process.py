@@ -9,9 +9,10 @@ Chris Parkinson (@chssn)
 import os
 import re
 import warnings
+from typing import Optional
 
 # Third Party Libraries
-import pandas as pd
+import pandas as pd # type: ignore
 from loguru import logger
 
 # Local Libraries
@@ -116,21 +117,28 @@ class ProcessAerodromes:
         return None
 
     @staticmethod
-    def ad_2_2(table:pd.DataFrame) -> dict:
+    def ad_2_2(table:pd.DataFrame) -> Optional[dict]:
         """Search for AD 2.2 - AERODROME GEOGRAPHICAL AND ADMINISTRATIVE DATA"""
 
         if re.search("ARP coordinates and site at AD", table.to_string()):
-            data_out = {}
+            data_out:dict = {}
             # Find the first row and print out the coordinates
             if table.iloc[0][2] == "ARP coordinates and site at AD":
-                data_out["arp_lat"] = re.search(r"\d{6}[NS]", str(table.iloc[0][3]))[0]
-                data_out["arp_lon"] = re.search(r"\d{7}[EW]", str(table.iloc[0][3]))[0]
+                arp_lat_search = re.search(r"\d{6}[NS]", str(table.iloc[0][3]))
+                arp_lon_search = re.search(r"\d{7}[EW]", str(table.iloc[0][3]))
+                if arp_lat_search and arp_lon_search:
+                    data_out["arp_lat"] = arp_lat_search[0]
+                    data_out["arp_lon"] = arp_lon_search[0]
             # Find the aerodrome elevation
             if table.iloc[2][2] == "Elevation / Reference temperature / Mean Low Temperature":
-                data_out["elevation_ft"] = re.match(r"^\d{1,5}(?=\sFT)", str(table.iloc[2][3]))[0]
+                elev_search = re.match(r"^\d{1,5}(?=\sFT)", str(table.iloc[2][3]))
+                if elev_search:
+                    data_out["elevation_ft"] = elev_search[0]
             # Find the magnetic variation
             if table.iloc[4][2] == "Magnetic Variation / Annual Change":
-                data_out["mag_var"] = re.match(r"^\d{1,3}\.\d{1,3}°[EW]", str(table.iloc[4][3]))[0]
+                mag_var_search = re.match(r"^\d{1,3}\.\d{1,3}°[EW]", str(table.iloc[4][3]))
+                if mag_var_search:
+                    data_out["mag_var"] = mag_var_search[0]
 
             logger.debug(data_out)
             return data_out

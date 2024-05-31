@@ -11,9 +11,10 @@ import re
 import shutil
 import urllib.error
 import warnings
+from typing import Any, Optional
 
 # Third Party Libraries
-import pandas as pd
+import pandas as pd # type: ignore
 from loguru import logger
 
 # Local Libraries
@@ -22,7 +23,7 @@ from eaip_parser import airac, builder, functions, lists, process
 # This is needed to supress 'xml as html' warnings with bs4
 warnings.filterwarnings("ignore", category=UserWarning)
 
-def parse_table(section:str, match:str=".+") -> None:
+def parse_table(section:str, match:str=".+") -> Any:
     """A decorator to parse the given section"""
     def decorator_func(func):
         def wrapper(self, *args, **kwargs):
@@ -117,7 +118,7 @@ class Webscrape:
             return str(f"{self.country}-{section}-{self.language}.html")
         raise ValueError(f"{section} is in an unexpected format!")
 
-    def get_table(self, section:str, match:str=".+") -> list:
+    def get_table(self, section:str, match:str=".+") -> Optional[list]:
         """Gets a table from the given url as a list of dataframes"""
 
         # Combine the airac cycle url with the page being scraped
@@ -139,11 +140,11 @@ class Webscrape:
         return None
 
     @parse_table("AD-1.3")
-    def parse_ad_1_3(self, tables:list=None) -> pd.DataFrame:
+    def parse_ad_1_3(self, **kwargs) -> pd.DataFrame:
         """Process data from AD 1.3 - INDEX TO AERODROMES AND HELIPORTS"""
 
         logger.debug(f"{self.date_in} - AD1.3")
-        tdf = tables[0]
+        tdf = kwargs["tables"][0]
 
         # Modify header row
         column_headers = [
@@ -169,14 +170,14 @@ class Webscrape:
         return tdf
 
     @parse_table("ENR-2.1")
-    def parse_enr_2_1(self, tables:list=None) -> list:
+    def parse_enr_2_1(self, **kwargs) -> list:
         """Pull data from ENR 2.1 - AIR TRAFFIC SERVICES AIRSPACE"""
 
         logger.debug(f"{self.date_in} - ENR2.1")
         # The data object table[0] is for FIR, UIR, TMA and CTA
-        fir_uir_tma_cta = tables[0]
+        fir_uir_tma_cta = kwargs["tables"][0]
         # The data object table[1] is for CTR
-        ctr = tables[1]
+        ctr = kwargs["tables"][1]
         # Modify header row
         fir_uir_tma_cta.columns = lists.column_headers_airspace
         ctr.columns = lists.column_headers_airspace
@@ -184,16 +185,16 @@ class Webscrape:
         return [fir_uir_tma_cta, ctr]
 
     @parse_table("ENR-2.2")
-    def parse_enr_2_2(self, tables:list=None) -> list:
+    def parse_enr_2_2(self, **kwargs) -> list:
         """Pull data from ENR 2.2 - OTHER REGULATED AIRSPACE"""
 
         logger.debug(f"{self.date_in} - ENR2.2")
         # The data object table[0] is for ATZ
-        atz = tables[0]
+        atz = kwargs["tables"][0]
         # The data object table[27] is for FRA
-        fra = tables[26]
+        fra = kwargs["tables"][26]
         # The data object table[28] is for Channel Islands Airspace
-        cia = tables[27]
+        cia = kwargs["tables"][27]
 
         # Modify header rows
         column_headers = [
@@ -209,14 +210,14 @@ class Webscrape:
         return [atz, fra, cia]
 
     @parse_table("ENR-3.2", "Route Designator")
-    def parse_enr_3_2(self, tables:list=None) -> list:
+    def parse_enr_3_2(self, **kwargs) -> list:
         """Pull data from ENR 3.2 - AREA NAVIGATION ROUTES"""
 
         logger.debug(f"{self.date_in} - ENR3.2")
-        logger.debug(f"Found {len(tables)} ENR-3.2 tables")
+        logger.debug(f"Found {len(kwargs['tables'])} ENR-3.2 tables")
         table_out = []
 
-        for table in tables:
+        for table in kwargs["tables"]:
             table.columns = lists.column_headers_route
             table.drop(["del1","del2","del3"], axis=1)
             table_out.append(table)
@@ -224,14 +225,14 @@ class Webscrape:
         return table_out
 
     @parse_table("ENR-3.3", "Route Designator")
-    def parse_enr_3_3(self, tables:list=None) -> list:
+    def parse_enr_3_3(self, **kwargs) -> list:
         """Pull data from ENR 3.3 - OTHER ROUTES"""
 
         logger.debug(f"{self.date_in} - ENR3.3")
-        logger.debug(f"Found {len(tables)} ENR-3.3 tables")
+        logger.debug(f"Found {len(kwargs['tables'])} ENR-3.3 tables")
         table_out = []
 
-        for table in tables:
+        for table in kwargs["tables"]:
             table.columns = lists.column_headers_route
             table.drop(["del1","del2","del3"], axis=1)
             table_out.append(table)
@@ -239,11 +240,11 @@ class Webscrape:
         return table_out
 
     @parse_table("ENR-4.1")
-    def parse_enr_4_1(self, tables:list=None) -> pd.DataFrame:
+    def parse_enr_4_1(self, **kwargs) -> pd.DataFrame:
         """Process data from ENR 4.1 - RADIO NAVIGATION AIDS - EN-ROUTE"""
 
         logger.debug(f"{self.date_in} - ENR4.1")
-        tdf = tables[0]
+        tdf = kwargs["tables"][0]
 
         # Modify header row
         column_headers = [
@@ -267,11 +268,11 @@ class Webscrape:
         return tdf
 
     @parse_table("ENR-4.4")
-    def parse_enr_4_4(self, tables:list=None) -> pd.DataFrame:
+    def parse_enr_4_4(self, **kwargs) -> pd.DataFrame:
         """Process data from ENR 4.1 - RADIO NAVIGATION AIDS - EN-ROUTE"""
 
         logger.debug(f"{self.date_in} - ENR4.4")
-        tdf = tables[0]
+        tdf = kwargs["tables"][0]
 
         # Modify header row
         column_headers = [
@@ -292,12 +293,12 @@ class Webscrape:
         return tdf
 
     @parse_table("ENR-5.1")
-    def parse_enr_5_1(self, tables:list=None) -> pd.DataFrame:
+    def parse_enr_5_1(self, **kwargs) -> pd.DataFrame:
         """Pull data from ENR 5.1 - PROHIBITED, RESTRICTED AND DANGER AREAS"""
 
         logger.debug(f"{self.date_in} - ENR5.1")
         # The data object is table[0]
-        nwt = tables[0]
+        nwt = kwargs["tables"][0]
 
         # Modify header row
         nwt.columns = lists.column_headers_nav_warn
@@ -308,12 +309,12 @@ class Webscrape:
         return nwt
 
     @parse_table("ENR-5.2")
-    def parse_enr_5_2(self, tables:list=None) -> pd.DataFrame:
+    def parse_enr_5_2(self, **kwargs) -> pd.DataFrame:
         """Pull data from ENR 5.1 - PROHIBITED, RESTRICTED AND DANGER AREAS"""
 
         logger.debug(f"{self.date_in} - ENR5.2")
         # The data object is table[0]
-        nwt = tables[0]
+        nwt = kwargs["tables"][0]
 
         # Modify header row
         nwt.columns = lists.column_headers_nav_warn
@@ -324,13 +325,13 @@ class Webscrape:
         return nwt
 
     @parse_table("ENR-5.3")
-    def parse_enr_5_3(self, tables:list=None) -> pd.DataFrame:
+    def parse_enr_5_3(self, **kwargs) -> pd.DataFrame:
         """Pull data from ENR 5.1 - PROHIBITED, RESTRICTED AND DANGER AREAS"""
 
         logger.debug(f"{self.date_in} - ENR5.3")
         # The data object is table[1] - table[0] relates exclusively to small arms ranges with an
         # upper limit of 500ft
-        nwt = tables[1]
+        nwt = kwargs["tables"][1]
 
         # Modify header row
         nwt.columns = [
@@ -392,12 +393,13 @@ class ProcessData:
                 # Special case for UK Free Route Airspace
                 lat_lim = lists.Regex.lateral_limits(row["lateral_limits"])
                 v_lim = lists.Regex.flight_level(row["vertical_limits"])
+                if lat_lim:
+                    areas[lat_lim[1]] = str(lat_lim[2]).lstrip()
+                    limits_class[lat_lim[1]] = ("UK Free Route Airspace from "
+                                                f"{v_lim[0]} to {v_lim[1]}")
 
-                areas[lat_lim[1]] = str(lat_lim[2]).lstrip()
-                limits_class[lat_lim[1]] = f"UK Free Route Airspace from {v_lim[0]} to {v_lim[1]}"
-
-                logger.debug(areas[lat_lim[1]])
-                logger.debug(limits_class[lat_lim[1]])
+                    logger.debug(areas[lat_lim[1]])
+                    logger.debug(limits_class[lat_lim[1]])
             elif file_name == "ENR-2.2_2":
                 # Special case for Channel Islands Airspace
                 if re.search(r"\d{6}(\.\d{2})?[NS]{1}", row["lateral_limits"]):
@@ -408,21 +410,21 @@ class ProcessData:
                     logger.debug(row["vertical_limits"])
             else:
                 # Check to see if this row contains an area name
-                title = re.match(
+                title_b = re.match(
                     r"^([A-Z\s\-]+(\bFIR\b|\bUIR\b|\bTMA\b|\bCTA\b|\bCTR\b|\bATZ\b|\bFRA\b\s"
                     r"\([A-Z\s]+\))(\s\d{1,2})?)(?:\s\s)",
-                    str(row["data"])
+                    row["data"]
                     )
-                if title:
-                    logger.debug(title[1])
+                if title_b:
+                    logger.debug(title_b[1])
                     # Find the boundary of the area
                     coords = re.search(
                         r"(?<=\s\s)((\d{6}[NS]{1}\s\d{7}[EW]{1}.*)|(\bA\scircle\b.*))"
                         r"(?=\s+\bUpper\b)", row["data"]
                         )
                     if coords:
-                        areas[title[1]] = coords[1]
-                        logger.debug(areas[title[1]])
+                        areas[title_b[1]] = coords[1]
+                        logger.debug(areas[title_b[1]])
 
                     # Find the lateral limits
                     limits = re.search(
@@ -436,10 +438,10 @@ class ProcessData:
                     frequency = lists.Regex.frequency(row["frequency"])
 
                     if limits and coords and callsign and frequency:
-                        limits_class[title[1]] = (f"Class {limits[7]} airspace from {limits[4]} "
+                        limits_class[title_b[1]] = (f"Class {limits[7]} airspace from {limits[4]} "
                                                   f"to {limits[1]} - {row['unit']} "
                                                   f"({callsign[1].rstrip()}), {frequency[1]}MHz")
-                        logger.debug(limits_class[title[1]])
+                        logger.debug(limits_class[title_b[1]])
 
         # Write the scraped data to file
         self.write_enr_2(areas, file_name, no_build, limits_class)
@@ -448,15 +450,15 @@ class ProcessData:
         """Generic ENR 3 search actions"""
 
         route_name = None
-        vor_dme = {}
-        nav_point = {}
-        scraped_data = {}
+        vor_dme:dict = {}
+        nav_point:dict = {}
+        scraped_data:dict[str,Any] = {}
         scraped_data["u_count"] = 0
         scraped_data["l_count"] = 0
         scraped_data["p_count"] = 0
-        scraped_data["last_point"] = None
-        scraped_data["uplo"] = None
-        scraped_data["point"] = None
+        scraped_data["last_point"] = 0
+        scraped_data["uplo"] = 0
+        scraped_data["point"] = 0
         for index, row in df_enr_3.iterrows():
             # Only look at rows which have something in the 3rd column
             # This will filter out all the short rows which are of little value
@@ -584,11 +586,11 @@ class ProcessData:
 
         return output
 
-    def search_enr_5_x(self, df_enr_5:pd.DataFrame, file_name:str, no_build:bool=False) -> list:
+    def search_enr_5_x(self, df_enr_5:pd.DataFrame, file_name:str, no_build:bool=False) -> None:
         """ENR 5.1 search actions"""
 
         # Start the iterator
-        data_store = {}
+        data_store:dict = {}
         data_store["file_name"] = file_name
         data_store["no_build"] = no_build
         for index, row in df_enr_5.iterrows():
@@ -740,19 +742,20 @@ class ProcessData:
 
                 # Add comments into the sct output
                 this_title = re.match(r"^([A-Z\s\/]+)", str(idx))
-                if this_title[1] != last_title:
-                    file.write(output)
-                    output = ""
-                    output = f"{output}\n; {this_title[1]}"
+                if this_title:
+                    if this_title[1] != last_title:
+                        file.write(output)
+                        output = ""
+                        output = f"{output}\n; {this_title[1]}"
 
-                try:
-                    lco = limits_class[idx]
-                except KeyError as error:
-                    logger.warning(f"Unable to locate limits and class for {error}")
-                    lco = "WARNING! Unable to locate limits and class"
+                    try:
+                        lco = limits_class[idx]
+                    except KeyError as error:
+                        logger.warning(f"Unable to locate limits and class for {error}")
+                        lco = "WARNING! Unable to locate limits and class"
 
-                output = f"{output}\n; {idx} - {lco}\n{sct_data}\n"
-                last_title = this_title[1]
+                    output = f"{output}\n; {idx} - {lco}\n{sct_data}\n"
+                    last_title = this_title[1]
             file.write(output)
 
     @staticmethod
@@ -879,7 +882,7 @@ class ProcessData:
         if len(vert_limits) in [1,2]:
             upper_fl = str(vert_limits[0]).split(" ")[1]
             if len(vert_limits) == 2:
-                lower_fl = str(vert_limits[1]).split(" ")[1]
+                lower_fl:Any = str(vert_limits[1]).split(" ")[1]
             else:
                 lower_fl = 0
             if (int(upper_fl) > self.airway_split and
@@ -903,7 +906,7 @@ class ProcessData:
         raise ValueError(ve_text)
 
     @staticmethod
-    def route_upper_lower(prefix:str, key:str, scraped_data:str) -> dict:
+    def route_upper_lower(prefix:str, key:str, scraped_data:Any) -> dict:
         """Identify upper and lower routes"""
 
         if scraped_data[prefix+"_count"] == scraped_data["p_count"]:

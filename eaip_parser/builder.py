@@ -14,9 +14,9 @@ import time
 from dataclasses import dataclass
 
 # Third Party Libraries
-import requests
+import requests # type: ignore
 from loguru import logger
-import pandas as pd
+import pandas as pd # type: ignore
 
 # Local Libraries
 from eaip_parser import functions, lists, process
@@ -44,7 +44,7 @@ class KiloJuliett:
     """A class to build using https://kilojuliett.ch/webtools/geo/coordinatesconverter"""
 
     def __init__(self, base_url:str="https://kilojuliett.ch/webtools/geo/json") -> None:
-        self.request_settings = {}
+        self.request_settings: dict = {}
         self.base_url = base_url
         self.rate_limit = 0
 
@@ -223,12 +223,12 @@ class BuildAirports:
         # Load the list of aerodromes
         self.df_ad_1_3 = self.load_df("AD-1.3.csv")
         # Init some vars
-        self.airport_dir = None
+        self.airport_dir = ""
         self.build = KiloJuliett()
         self.build.settings()
-        self.coord = None
-        self.icao = None
-        self.icao_title = None
+        self.coord = ""
+        self.icao = ""
+        self.icao_title = ""
         self.no_build = no_build
 
     def run(self) -> None:
@@ -236,7 +236,7 @@ class BuildAirports:
 
         # For each aerodrome defined in AD 1.3 do this
         for index, row in self.df_ad_1_3.iterrows():
-            self.coord = None
+            self.coord = ""
             self.icao = row['icao_designator']
             self.icao_title = str(row["location"]).title()
             logger.info(f"Building files for {self.icao} ({index})")
@@ -263,7 +263,7 @@ class BuildAirports:
         return output_dir
 
     @staticmethod
-    def runway_flip_flop(runway:str) -> dict:
+    def runway_flip_flop(runway:str) -> str:
         """Returns something representing the opposing runway"""
 
         # Search the given string - not sure what the X suffix denotes but G seems to be grass
@@ -271,19 +271,19 @@ class BuildAirports:
         if runway is not None and rwy:
             # Flip the number using modulo 36 as we're dealing in 2 digit numbers
             if int(rwy[1]) >= 0 and int(rwy[1]) <= 36:
-                rwy_opp = (int(rwy[1]) + 18) % 36
+                rwy_opp = str((int(rwy[1]) + 18) % 36)
                 # Get the alternate letter if any
                 if len(rwy.groups()) + 1 == 3:
                     if rwy[2] == "L":
-                        return f"{str(rwy_opp).zfill(2)}R"
+                        return f"{rwy_opp.zfill(2)}R"
                     if rwy[2] == "R":
-                        return f"{str(rwy_opp).zfill(2)}L"
+                        return f"{rwy_opp.zfill(2)}L"
                     if rwy[2] == "C":
-                        return f"{str(rwy_opp).zfill(2)}C"
+                        return f"{rwy_opp.zfill(2)}C"
                     if rwy[2] == "X":
-                        return f"{str(rwy_opp).zfill(2)}X"
+                        return f"{rwy_opp.zfill(2)}X"
                     if rwy[2] == "G":
-                        return f"{str(rwy_opp).zfill(2)}G"
+                        return f"{rwy_opp.zfill(2)}G"
 
                 # This function will return a single digit runway number if no suffix and
                 # mathmatically calculated. This is required for df searches.
@@ -337,7 +337,7 @@ class BuildAirports:
         """Build the 'Airspace.txt' file"""
 
         start = True
-        data = {}
+        data:dict = {}
         ats_data = self.load_df("AA - ATS.csv", True)
         file_path = os.path.join(self.airport_dir, "Airspace.txt")
         with open(file_path, "w", encoding="utf-8") as file:
@@ -351,7 +351,7 @@ class BuildAirports:
                 data["p_title"] = " ".join(data["p_title"])
                 # Request data
                 if self.no_build:
-                    sct_data = f"The 'no build' option has been selected...\n{des_split[1]}"
+                    sct_data = ["The 'no build' option has been selected...", des_split[1]]
                 else:
                     # Filter out long winded text
                     short_filter = des_split[1]
@@ -360,9 +360,9 @@ class BuildAirports:
                     # This MUST be an if and not an elif due to the GURNSEY ATZ problem
                     if re.search("extending", short_filter):
                         short_filter = des_split[1].split("extending", maxsplit=1)[0]
-                    sct_data = self.build.request_output(short_filter)
+                    sct_data_output = self.build.request_output(short_filter)
                     # Split any returned data into a list
-                    sct_data = sct_data.split("\n")
+                    sct_data = sct_data_output.split("\n")
 
                 data["limits"] = lists.Regex.vertical_limits(row["vertical_limits"])
                 data["title"] = (f"{data['p_title']} {row['airspace_class']} "
@@ -440,7 +440,7 @@ class BuildAirports:
         if self.coord is None:
             raise ValueError("Coordinates have not been set")
 
-        data = {}
+        data:dict = {}
         data["ignore"] = []
         runway_data = self.load_df("AA - COMMS.csv", True)
         file_path = os.path.join(self.airport_dir, "Positions.txt")
@@ -521,7 +521,7 @@ class BuildAirports:
         8. Runway end lon
         """
 
-        data = {}
+        data:dict = {}
         data["ignore"] = []
         runway_data = self.load_df("AA - RUNWAYS.csv", True)
         file_path = os.path.join(self.airport_dir, "Runway.txt")

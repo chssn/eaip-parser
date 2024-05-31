@@ -7,6 +7,7 @@ Chris Parkinson (@chssn)
 
 # Standard Libraries
 import re
+from typing import Optional
 
 # A list of country codes and associated language
 country_codes = {
@@ -134,25 +135,25 @@ class Regex:
         return re.findall(r"(FL\s\d{2,3})", str(string_to_search))
 
     @staticmethod
-    def lateral_limits(string_to_search:str) -> list:
+    def lateral_limits(string_to_search:str) -> Optional[re.Match[str]]:
         """Searches for lateral limits"""
         return re.match(r"^([A-Z0-9\s]+)(\s\d{6}(\.\d{2})?[NS]{1}.*)", str(string_to_search))
 
     @staticmethod
-    def vertical_limits(string_to_search:str) -> list:
+    def vertical_limits(string_to_search:str) -> Optional[re.Match[str]]:
         """Searches for vertical limits"""
         return re.match(
             r"(?:Upper\slimit\:\s)(.+)(?:\s\sLower\slimit\:\s)(.+)", str(string_to_search))
 
     @staticmethod
-    def frequency(string_to_search:str, anchor:bool=False) -> list:
+    def frequency(string_to_search:str, anchor:bool=False) -> Optional[re.Match[str]]:
         """Searches for a frequency"""
         if anchor:
             return re.match(r"^(\d{3}\.\d{3})$", str(string_to_search))
         return re.match(r"(\d{3}\.\d{3})", str(string_to_search))
 
     @staticmethod
-    def coordinates(string_to_search:str, anchor:bool=True) -> list:
+    def coordinates(string_to_search:str, anchor:bool=True) -> Optional[re.Match[str]]:
         """Searches for a coordinate pair"""
         if anchor:
             return re.match(
@@ -165,12 +166,12 @@ class Regex:
                 )
 
     @staticmethod
-    def tacan_channel(string_to_search:str) -> list:
+    def tacan_channel(string_to_search:str) -> Optional[re.Match[str]]:
         """Searches for a bunch of flight levels"""
         return re.match(r"(\d{2,3}[XY]{1})", str(string_to_search))
 
     @staticmethod
-    def vor_dme_ndb(string_to_search:str) -> list:
+    def vor_dme_ndb(string_to_search:str) -> Optional[re.Match[str]]:
         """Searches for the word(s) VOR, DME and NDB"""
         return re.match(
             r"^([A-Z\s\']+)\s\s([VORDMENB]{3}(\/[VORDMENB]{3})?)",

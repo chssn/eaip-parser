@@ -118,9 +118,11 @@ class UkSectorFile:
                     full_path = file_fp
                     file_name = re.match(r".*([A-Z]+[0-9]+\.txt)$", str(full_path))
                     logger.debug(full_path)
-                    logger.debug(file_name[1])
+                    if file_name:
+                        logger.debug(file_name.group(1))
                     break
-            return [full_path, file_name[1]]
+            if file_name:
+                return [full_path, file_name.group(1)]
         raise ValueError("An empty list has been passed")
 
     @staticmethod
@@ -134,9 +136,9 @@ class UkSectorFile:
         """Do a load of comparrisons"""
 
         for file in csf_list:
-            comp_data = {}
-            comp_data["end_a"] = 0
-            comp_data["end_b"] = 0
+            comp_data:dict = {}
+            comp_data["end_a"] = ""
+            comp_data["end_b"] = ""
             # Get the filename from csf
             csf_file = UkSectorFile.airways_filename_finder(csf_list_full[1], file)
             comp_data["side_a"] = csf_file[0]
@@ -152,7 +154,7 @@ class UkSectorFile:
                 (comp_data["end_a"] == 0 and comp_data["end_b"] == 0)):
                 raise ValueError(f"{comp_data['end_a']} != {comp_data['end_b']} :: {file}")
             # If the files don't match then do a bit more digging
-            if not filecmp.cmp(comp_data["side_a"], comp_data["side_b"], shallow=False):
+            if not filecmp.cmp(str(comp_data["side_a"]), str(comp_data["side_b"]), shallow=False):
                 logger.trace(f"{file} doesn't match")
                 # Open both files side by side
                 with open(comp_data["side_a"], "r", encoding="utf-8") as file_a, \
