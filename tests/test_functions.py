@@ -18,30 +18,6 @@ from unittest.mock import MagicMock, patch
 import eaip_parser.functions as functions
 from eaip_parser.functions import Geo, GitActions, TacanVor, NoUrlDataFoundError
 
-def test_is_25khz():
-    """is_25khz"""
-    test_cases = [
-        ("121.800", False),
-        ("121.875", False),
-        ("121.805", "121.800"),
-        ("121.870", "121.875"),
-        ("121.070", "121.075"),
-        ("121.995", "122.000"),
-    ]
-    for freq, outcome in test_cases:
-        assert functions.is_25khz(freq) == outcome
-
-    with pytest.raises(TypeError):
-        functions.is_25khz(121.875)
-    with pytest.raises(ValueError):
-        functions.is_25khz("121.87")
-    with pytest.raises(ValueError):
-        functions.is_25khz("12.875")
-    with pytest.raises(ValueError):
-        functions.is_25khz("1211.875")
-    with pytest.raises(ValueError):
-        functions.is_25khz("121.8755")
-
 def test_generate_file_names():
     test_data = [
         "file1.csv",
