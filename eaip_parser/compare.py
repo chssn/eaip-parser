@@ -21,8 +21,15 @@ class UkSectorFile:
     """Carry out validation of the UK Sector File"""
 
     def __init__(self) -> None:
+        self._git_actions()
+
+    def _git_actions(self) -> None:
+        """Some git actions to compare against"""
         git = functions.GitActions()
         self.root_dir = git.git_path
+        if git.check_requirements():
+            if git.clone():
+                git.pull()
 
     @staticmethod
     def find_files_by_regex(pattern:str, dir_path:str) -> list:
