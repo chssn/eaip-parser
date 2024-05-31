@@ -213,7 +213,7 @@ class KiloJuliett:
             if self.check_in_uk(json_load["txt"]):
                 return json_load["txt"]
             break
-        return "Nothing"
+        raise requests.exceptions.HTTPError(f"Error loading {self.base_url}")
 
 
 class BuildAirports:
