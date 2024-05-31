@@ -142,8 +142,8 @@ class UkSectorFile:
         ) -> None:
         """Do a load of comparrisons"""
 
+        comp_data:dict = {}
         for file in csf_list:
-            comp_data:dict = {}
             comp_data["end_a"] = ""
             comp_data["end_b"] = ""
             # Get the filename from csf
