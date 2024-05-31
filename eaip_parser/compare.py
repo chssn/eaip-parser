@@ -14,7 +14,7 @@ import re
 from loguru import logger
 
 # Local Libraries
-from . import functions
+from eaip_parser import functions
 
 
 class UkSectorFile:

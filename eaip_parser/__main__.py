@@ -13,7 +13,7 @@ from loguru import logger
 
 # Local Libraries
 import eaip_parser
-from . import compare, webscrape
+from eaip_parser import compare, webscrape
 
 @logger.catch
 def main() -> None:

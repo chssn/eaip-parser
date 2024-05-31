@@ -19,7 +19,7 @@ from loguru import logger
 import pandas as pd
 
 # Local Libraries
-from . import functions, lists, process
+from eaip_parser import functions, lists, process
 
 
 @dataclass

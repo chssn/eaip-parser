@@ -15,7 +15,7 @@ import pandas as pd
 from loguru import logger
 
 # Local Libraries
-from . import functions, lists
+from eaip_parser import functions, lists
 
 # This is needed to supress 'xml as html' warnings with bs4
 warnings.filterwarnings("ignore", category=UserWarning)
