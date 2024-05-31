@@ -30,7 +30,7 @@ def parse_table(section:str, match:str=".+") -> Any:
             logger.info(f"Parsing {section} data...")
             tables = self.get_table(section, match)
             if tables:
-                dataframe = func(self, tables, *args, **kwargs)
+                dataframe = func(self, tables=tables, *args, **kwargs)
                 if isinstance(dataframe, pd.DataFrame):
                     # If a single dataframe is passed
                     df_path = os.path.join(functions.work_dir, "DataFrames", f"{section}.csv")
