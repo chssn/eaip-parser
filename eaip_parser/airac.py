@@ -3,7 +3,7 @@ eAIP Parser
 Chris Parkinson (@chssn)
 """
 
-#!/usr/bin/env python3.8
+#!/usr/bin/env python3.9
 
 # Standard Libraries
 import math
