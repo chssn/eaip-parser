@@ -143,17 +143,17 @@ class KiloJuliett:
         if len(lat) > 0 and len(lon) > 0:
             for item in lat:
                 if item[0] == "S":
-                    logger.error(f"{item} not within UK bounds!\n{coords}")
+                    logger.error(f"{item} not within UK bounds! {coords}")
                     return False
                 if int(item[1]) < 46 or int(item[1]) > 62:
-                    logger.error(f"{item} not within UK bounds!\n{coords}")
+                    logger.error(f"{item} not within UK bounds! {coords}")
                     return False
             for item in lon:
                 if item[0] == "W" and int(item[1]) > 11:
-                    logger.error(f"{item} not within UK bounds!\n{coords}")
+                    logger.error(f"{item} not within UK bounds! {coords}")
                     return False
                 if item[0] == "E" and int(item[1]) > 2:
-                    logger.error(f"{item} not within UK bounds!\n{coords}")
+                    logger.error(f"{item} not within UK bounds! {coords}")
                     return False
 
             return True
