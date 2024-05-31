@@ -44,23 +44,6 @@ def generate_file_names(file_start:str, file_type:str="csv") -> list:
                     file.startswith(file_start) and file.endswith(file_type)])
     return enr_files
 
-def is_25khz(frequency:str):
-    """
-    Works out if the given frequency is 25KHz
-    Returns FALSE if this is a 25KHz frequency (the logic is much easier that way)
-    If not, rounds to the nearest 25KHz
-    """
-
-    freq_match = re.match(r"^(\d{3})\.(\d{3})$", frequency)
-    if freq_match:
-        if frequency.endswith(("00", "25", "50", "75")):
-            return False
-        round_decimal = round(int(freq_match[2]) / 25) * 25
-        if round_decimal == 1000:
-            return f"{str(int(freq_match[1])+1)}.000"
-        return f"{freq_match[1]}.{str(round_decimal).zfill(3)}"
-    raise ValueError("Expected frequency in the format nnn.nnn MHz")
-
 
 class GitActions:
     """
