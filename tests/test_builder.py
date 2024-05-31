@@ -20,7 +20,7 @@ def test_init():
     """__init__"""
     kj_test = KiloJuliett()
     assert not kj_test.request_settings
-    assert kj_test.base_url == "https://kilojuliett.ch:443/webtools/geo/json"
+    assert kj_test.base_url == "https://kilojuliett.ch/webtools/geo/json"
 
     kj_test = KiloJuliett(base_url="402356895uy089wgja[n[arg]]")
     assert kj_test.base_url == "402356895uy089wgja[n[arg]]"
