@@ -1,5 +1,30 @@
 # Changelog
 
+## [0.8.4](https://github.com/chssn/eaip-parser/compare/v0.8.3...v0.8.4) (2024-05-31)
+
+
+### Bug Fixes
+
+* git actions not implemented ([00a80c3](https://github.com/chssn/eaip-parser/commit/00a80c3dcdfcf19cc1360abc895fe48d0f7eee21))
+* incorrect file path used ([d72b5b6](https://github.com/chssn/eaip-parser/commit/d72b5b6b8219e0463c81407b3801370ee06a818c))
+* incorrect implementation of kwargs ([7185602](https://github.com/chssn/eaip-parser/commit/718560235e7953a7b6cee2d66be648fe423708aa))
+* line 1 still containing NCS! ([9bc4892](https://github.com/chssn/eaip-parser/commit/9bc48923df0866cc79a7eb4de1c77cd72a7dd610))
+* no error raised if non-200 http response ([17162a6](https://github.com/chssn/eaip-parser/commit/17162a6e865f8e488b0d8add304e7ad1789dc463))
+* no UK geo bounding ([1278914](https://github.com/chssn/eaip-parser/commit/1278914c4a9577408dfaf615513d801def7b990b))
+* non continuous section line added at line 1 ([aac9bde](https://github.com/chssn/eaip-parser/commit/aac9bde933c908b9c93f362dc61a9b21056d18a8))
+* non-uk coords raising http exception ([cf8308a](https://github.com/chssn/eaip-parser/commit/cf8308a2e682bb946780bd84f3126eadc58b6292))
+* not processing non uk points correctly ([c49dcd7](https://github.com/chssn/eaip-parser/commit/c49dcd74c4fc029672745ca94032f8382f9b36df))
+* type error raised ([b2ca7f1](https://github.com/chssn/eaip-parser/commit/b2ca7f1dabdaeefd794c1f44730d0e20cd7194f9))
+* unbound local error ([7829327](https://github.com/chssn/eaip-parser/commit/782932726fb951b3063cfb5b7c2a350c5c03c617))
+
+
+### Performance Improvements
+
+* remove more unused files ([2408080](https://github.com/chssn/eaip-parser/commit/2408080221110a2beb0cf0c82d46acf450ac1989))
+* remove redundant code ([e7c6b50](https://github.com/chssn/eaip-parser/commit/e7c6b501f89a789a33678644d09c5b0abea0c000))
+* removed redundant 25khz function ([a0558a0](https://github.com/chssn/eaip-parser/commit/a0558a0fd9dd5596963b004982e2fb00e7d59dba))
+* removed unused files ([0658b68](https://github.com/chssn/eaip-parser/commit/0658b6875febed006a2b19007213192b466ed2b4))
+
 ## [0.8.3](https://github.com/chssn/eaip-parser/compare/v0.8.2...v0.8.3) (2024-05-31)
 
 

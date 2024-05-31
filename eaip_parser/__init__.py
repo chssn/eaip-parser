@@ -11,4 +11,4 @@ Chris Parkinson (@chssn)
 
 # Local Libraries
 
-__VERSION__ = "0.8.3"
+__VERSION__ = "0.8.4"
