@@ -576,8 +576,9 @@ class ProcessData:
                     # Needs to be sent as double coords due to 3rd party limitations
                     coord_xform = self.build.request_output(
                         f'{row["coordinates"]} {row["coordinates"]}')
-                    xform_split = coord_xform.split(" ")
-                    coord_out = f"{xform_split[0]} {xform_split[1]}"
+                    if coord_xform != "NUK":
+                        xform_split = coord_xform.split(" ")
+                        coord_out = f"{xform_split[0]} {xform_split[1]}"
 
                 # Output format is ID FREQ LAT LON ; Name
                 line = f"{name[1]} {coord_out}"
@@ -662,11 +663,12 @@ class ProcessData:
                 # The coordinates need passing twice to work with the builder
                 # This is a 3rd party api limitation
                 xform = self.build.request_output(f"{coord[1]} {coord[1]}")
-                split_xform = xform.split(" ")
-                # Then we only need to return the first 2/4 results as they're duplicated
-                # This is an artifact from the api limitation already mentioned
-                coord_in[coord[0]] = f"{split_xform[0]} {split_xform[1]}"
-                logger.debug(f"{coord[0]} - {coord[1]} to {split_xform[0]} {split_xform[1]}")
+                if xform != "NUK":
+                    split_xform = xform.split(" ")
+                    # Then we only need to return the first 2/4 results as they're duplicated
+                    # This is an artifact from the api limitation already mentioned
+                    coord_in[coord[0]] = f"{split_xform[0]} {split_xform[1]}"
+                    logger.debug(f"{coord[0]} - {coord[1]} to {split_xform[0]} {split_xform[1]}")
             # Save as a csv df
             df_cc = pd.DataFrame.from_dict(coord_in, orient="index", columns=["lat/lon"])
             df_cc = df_cc.reset_index()
