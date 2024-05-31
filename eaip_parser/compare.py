@@ -211,16 +211,18 @@ class UkSectorFile:
             if int(os.path.getsize(comp_data["copy_file"])) > 0:
                 logger.info(f"{a_type} {str(file).split('.', maxsplit=1)[0]} was found during "
                             "the scrape but doesn't seem to be in the current sector file")
-                logger.debug(comp_data["copy_file"])
-                logger.debug(comp_data["copy_dest"])
+                logger.trace(comp_data["copy_file"])
+                logger.trace(comp_data["copy_dest"])
                 functions.copy_files(comp_data["copy_file"], comp_data["copy_dest"])
 
     def airways_rnav(self):
         """Run validation on rnav airways"""
 
         # Put all of the current sector file (csf) airways into a list
-        csf_rnav_lower = self.find_files_by_regex("(.+)", self.root_dir + "\\Airways\\RNAV\\Lower")
-        csf_rnav_upper = self.find_files_by_regex("(.+)", self.root_dir + "\\Airways\\RNAV\\Upper")
+        csf_rnav_lower = self.find_files_by_regex(
+            "(.+)", self.root_dir + "\\ATS Routes\\RNAV\\Lower")
+        csf_rnav_upper = self.find_files_by_regex(
+            "(.+)", self.root_dir + "\\ATS Routes\\RNAV\\Upper")
         # Put all of the scraped airways into a list
         file_path = os.path.join(functions.work_dir, "DataFrames")
         scraped_rnav_lower = self.find_files_by_regex("ENR-3.2-LOWER-(.+)", file_path)
