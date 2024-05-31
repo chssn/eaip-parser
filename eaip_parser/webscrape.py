@@ -413,7 +413,7 @@ class ProcessData:
                 title_b = re.match(
                     r"^([A-Z\s\-]+(\bFIR\b|\bUIR\b|\bTMA\b|\bCTA\b|\bCTR\b|\bATZ\b|\bFRA\b\s"
                     r"\([A-Z\s]+\))(\s\d{1,2})?)(?:\s\s)",
-                    row["data"]
+                    str(row["data"])
                     )
                 if title_b:
                     logger.debug(title_b[1])
