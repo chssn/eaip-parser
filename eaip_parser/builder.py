@@ -395,10 +395,10 @@ class BuildAirports:
             return None
         basic_data = process.ProcessAerodromes.ad_2_2(df_load)
         # Request data
-        if self.no_build:
+        if self.no_build and basic_data:
             coord_out = (f"The 'no build' option has been selected...\n{basic_data['arp_lat']} "
                         f"{basic_data['arp_lon']}")
-        else:
+        elif basic_data:
             # Needs to be sent as double coords due to 3rd party limitations
             coord_row = f"{basic_data['arp_lat']} {basic_data['arp_lon']}"
             coord_xform = self.build.request_output(f'{coord_row} {coord_row}')
@@ -478,10 +478,16 @@ class BuildAirports:
                 if data["cs_split"][1] == "ATIS":
                     data["middle"] = "S"
 
+                freq = lists.Regex.frequency(row["frequency"])
+                if freq:
+                    freq_out = freq[1]
+                else:
+                    freq_out = "None"
+
                 data["rt"] = str(row["callsign"]).title()
                 data["psfix"] = data['callsign'].split("_")
                 data["ll"] = self.coord.split()
-                data["freq"] = lists.Regex.frequency(row["frequency"])[1]
+                data["freq"] = freq_out
                 freq_check = functions.is_25khz(data["freq"])
                 if freq_check:
                     data["freq"] = freq_check
