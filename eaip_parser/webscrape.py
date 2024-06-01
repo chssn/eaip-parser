@@ -795,7 +795,7 @@ class ProcessData:
 
                     # Deal with any non-continuous sections of an airway
                     if point == "NCS!" and line_one_passed:
-                        file.write(";non continuous section\n")
+                        file.write(";Route Break\n")
                     elif point == "NCS!":
                         pass
                     elif point_plus == "NCS!" or point is None:
