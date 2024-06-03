@@ -1,5 +1,17 @@
 # Changelog
 
+# [0.9.0](https://github.com/chssn/eaip-parser/compare/v0.8.4...v0.9.0) (2024-06-01)
+
+
+### Bug Fixes
+
+* incorrect break text ([61fe3b0](https://github.com/chssn/eaip-parser/commit/61fe3b08364903d81722ac88df9a5f7f96aadb70))
+
+
+### Features
+
+* overhaul of file comparisons ([1fb1e6f](https://github.com/chssn/eaip-parser/commit/1fb1e6f72d54ae3aeb59533072b5bbf13b7c284f))
+
 ## [0.8.4](https://github.com/chssn/eaip-parser/compare/v0.8.3...v0.8.4) (2024-05-31)
 
 
