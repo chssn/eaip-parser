@@ -3,7 +3,7 @@ eAIP Parser
 Chris Parkinson (@chssn)
 """
 
-#!/usr/bin/env python3.8
+#!/usr/bin/env python3.9
 
 # Standard Libraries
 
@@ -11,4 +11,4 @@ Chris Parkinson (@chssn)
 
 # Local Libraries
 
-__version__ = "0.6.0"
+__VERSION__ = "0.9.0"

@@ -3,7 +3,7 @@ eAIP Parser
 Chris Parkinson (@chssn)
 """
 
-#!/usr/bin/env python3.8
+#!/usr/bin/env python3.9
 
 # Standard Libraries
 import sys
@@ -13,7 +13,7 @@ from loguru import logger
 
 # Local Libraries
 import eaip_parser
-from . import compare, webscrape
+from eaip_parser import compare, webscrape
 
 @logger.catch
 def main() -> None:
@@ -21,7 +21,7 @@ def main() -> None:
 
     logger.remove()
     logger.add(sys.stderr, level="INFO")
-    logger.info(f"eAIP Parser and Sector File Validator - {eaip_parser.__version__}")
+    logger.info(f"eAIP Parser and Sector File Validator - {eaip_parser.__VERSION__}")
 
     # Run the webscraper
     scrape = webscrape.Webscrape()
